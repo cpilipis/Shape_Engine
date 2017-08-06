@@ -60,8 +60,8 @@ body collide(body a, body b, bool last)
   bool xmove;
   bool ymove; //If we are to collide in one axis but not the other, don't mess with the other's movement.
 
-  if(a.x + a.width + a.xvel < b.x - b.width || a.x - a.width + a.xvel > b.x + b.width){xmove = true; puts("No collide in X axis");}else{xmove = false;}
-  if(a.y + a.height + a.yvel < b.y - b.height || a.y - a.height + a.yvel > b.y + b.height){ymove = true; puts("No collide in y axis");}else{ymove = false;}
+  if(a.x + a.width + a.xvel < b.x - b.width || a.x - a.width + a.xvel > b.x + b.width){xmove = true; puts("No collide in X axis at all, skipping checks");}else{xmove = false;}
+  if(a.y + a.height + a.yvel < b.y - b.height || a.y - a.height + a.yvel > b.y + b.height){ymove = true; a.canJump = false; puts("No collide in y axis at all, skipping checks");}else{ymove = false; a.canJump = true; puts("Player can jump, will collide in Y . . . ");}
   while(!(xcoll && ycoll))
   {
    if(xmove){xocup = false; xcoll = false; puts("Skipping X test");}else{
@@ -92,12 +92,11 @@ body collide(body a, body b, bool last)
   }else{ycoll = true; puts ("Objects WILL collide in y next frame");}
 
   printf ("About to try to move, with xvel of %d and yvel of %d\n", a.xvel, a.yvel);
-  if((!xcoll || !yocup) && a.xvel != 0 && !xmove) {a.x = a.x + signOf(a.xvel);}else if(!ymove){a.xvel = 0;}
-  if((!ycoll || !xocup) && a.yvel != 0 && !ymove) {a.y = a.y + signOf(a.yvel);}else if(!ymove){a.yvel = 0;}
+  if((!xcoll || !yocup) && !xmove) {a.x = a.x + signOf(a.xvel);}else if(!xmove){a.xvel = 0;}
+  if((!ycoll || !xocup) && !ymove) {a.y = a.y + signOf(a.yvel);}else if(!ymove){a.yvel = 0;}
  }
  if(xmove){}//a.x = a.x + a.xvel;}
  if(ymove){}//a.y = a.y + a.yvel;}
- if(xocup && a.y + a.height == b.y - b.height - 1){a.canJump = true; printf("Player can jump!\n");}else{a.canJump = false;}
 }else{
 puts ("Things aren't running into eachother, machine says . . . ");
 bool xocup = false;
@@ -107,7 +106,7 @@ if(a.x + a.width < b.x - b.width || a.x - a.width > b.x + b.width)
  puts("Objects aren't in x axis");
 }else{xocup = true; puts ("Objects ARE in x axis");}
 printf("%d, %d\n", a.y + a.height, b.y + b.height);
-if(xocup && a.y + a.height == b.y + b.height + 4){a.canJump = true; printf("Player can jump!\n");}else{a.canJump = false;}}
+if(xocup && a.y + a.height == b.y + b.height + 4){a.canJump = true; printf("Player can jump!\n");}}
 return a;
 }
 
