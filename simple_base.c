@@ -45,71 +45,72 @@ body newBody(int x, int y, int width, int height, bool isControlled, int jumphei
  return f;
 }
 
-body collide(body a, body b, bool last)
+body collide(body a, body b)
 {
- //let's define some side values to make the if statements and loops slightly more readable
- puts ("Beginning collide test!");
- if (!(a.x + a.width + a.xvel < b.x - b.width || a.x - a.width + a.xvel > b.x + b.width) && !(a.y - a.height + a.yvel > b.y + b.height || a.y + a.height + a.yvel < b.y - b.height))
- { //To handle collision, we'll quit moving object A when it's about to hit object B.
-  puts("Yup, things will collide normally, let's step in and do this pixel perfect.");
-  bool xcoll = false;
-  bool ycoll = false; //These mean the two objects are about to collide in some axis if we move them any further
-  bool xocup = false;
-  bool yocup = false; //These mean the two objects already occupy one of the two same axes
+ //Let's take this one axis at a time . . .
+puts("Starting new Collidenew function!");
+ bool xcoll = false;
+ bool ycoll = false; //These mean the two objects are about to collide in some axis if we move them any further
+ bool xocup = false;
+ bool yocup = false; //These mean the two objects already occupy one of the two same axes
 
-  bool xmove;
-  bool ymove; //If we are to collide in one axis but not the other, don't mess with the other's movement.
+ bool xmove;
+ bool ymove; //If we are to collide in one axis but not the other, don't mess with the other's movement.
 
-  if(a.x + a.width + a.xvel < b.x - b.width || a.x - a.width + a.xvel > b.x + b.width){xmove = true; puts("No collide in X axis at all, skipping checks");}else{xmove = false;}
-  if(a.y + a.height + a.yvel < b.y - b.height || a.y - a.height + a.yvel > b.y + b.height){ymove = true; a.canJump = false; puts("No collide in y axis at all, skipping checks");}else{ymove = false; a.canJump = true; puts("Player can jump, will collide in Y . . . ");}
-  while(!(xcoll && ycoll))
+ //Now to figure out the deal with x/ycoll/ocup
+ //X first
+ if(a.x + a.width < b.x - b.width || a.x - a.width > b.x + b.width)
+ {
+  xocup = false;
+  puts("Objects aren't in x axis");
+ }else{xocup = true; puts ("Objects ARE in x axis");}
+
+ if (a.x + a.width + signOf(a.xvel) < b.x - b.width || a.x - a.width + signOf(a.xvel) > b.x + b.width)
+ {
+  xcoll = false;
+  puts("Objects aren't about to collide");
+ }else{xcoll = true; puts ("Objects will collide in x next frame");}
+ //Now for Y
+ if(a.y + a.height < b.y - b.height || a.y - a.height > b.y + b.height)
+ {
+  yocup = false;
+  puts ("Objects aren't in y axis");
+ }else{yocup = true; puts ("Objects ARE in y axis");}
+ //Now to figure out if we even need to worry about the axises
+ if(a.x + a.width + a.xvel < b.x - b.width || a.x - a.width + a.xvel > b.x + b.width){xmove = true; puts("No collide in X axis at all, skipping checks");}else{puts("Objects will collide in X"); xmove = false;}
+ if(a.y + a.height + a.yvel < b.y - b.height || a.y - a.height + a.yvel > b.y + b.height){ymove = true; puts("No collide in y axis at all, skipping checks");}else{ymove = false; if(xocup){a.canJump = true;} puts("Player can jump, will collide in Y . . . ");}
+
+ if(a.y + a.height + signOf(a.yvel) < b.y - b.height || a.y - a.height + signOf(a.yvel) > b.y + b.height)
+ {
+  ycoll = false;
+  puts ("Objects aren't about to collide in y");
+ }else{ycoll = true; puts ("Objects WILL collide in y next frame");}
+ while (!xcoll)
+ {
+  if(xmove || !yocup){break;}
+  a.x = a.x + signOf(a.xvel);
+  if (a.x + a.width + signOf(a.xvel) < b.x - b.width || a.x - a.width + signOf(a.xvel) > b.x + b.width)
   {
-   if(xmove){xocup = false; xcoll = false; puts("Skipping X test");}else{
-   if(a.x + a.width < b.x - b.width || a.x - a.width > b.x + b.width)
-   {
-    xocup = false;
-    puts("Objects aren't in x axis");
-   }else{xocup = true; puts ("Objects ARE in x axis");}
-
-   if (a.x + a.width + signOf(a.xvel) < b.x - b.width || a.x - a.width + signOf(a.xvel) > b.x + b.width)
-   {
-    xcoll = false;
-    puts("Objects aren't about to collide");
-   }else{xcoll = true; puts ("Objects will collide in x next frame");}}
-
-   if(a.y + a.height < b.y - b.height || a.y - a.height > b.y + b.height)
-   {
-    yocup = false;
-    puts ("Objects aren't in y axis");
-   }else{yocup = true; puts ("Objects ARE in y axis");}
-
-
-
+   xcoll = false;
+   puts("Objects aren't about to collide");
+  }else{xcoll = true; puts ("Objects will collide in x next frame");}
+ }
+ if(xcoll && yocup){a.xvel = 0;}
+ while (!ycoll)
+ {
+  if(ymove || !xocup){break;}
+  a.y = a.y + signOf(a.yvel);
   if(a.y + a.height + signOf(a.yvel) < b.y - b.height || a.y - a.height + signOf(a.yvel) > b.y + b.height)
   {
    ycoll = false;
    puts ("Objects aren't about to collide in y");
   }else{ycoll = true; puts ("Objects WILL collide in y next frame");}
 
-  printf ("About to try to move, with xvel of %d and yvel of %d\n", a.xvel, a.yvel);
-  if((!xcoll || !yocup) && !xmove) {a.x = a.x + signOf(a.xvel);}else if(!xmove){a.xvel = 0;}
-  if((!ycoll || !xocup) && !ymove) {a.y = a.y + signOf(a.yvel);}else if(!ymove){a.yvel = 0;}
  }
- if(xmove){}//a.x = a.x + a.xvel;}
- if(ymove){}//a.y = a.y + a.yvel;}
-}else{
-puts ("Things aren't running into eachother, machine says . . . ");
-bool xocup = false;
-if(a.x + a.width < b.x - b.width || a.x - a.width > b.x + b.width)
-{
- xocup = false;
- puts("Objects aren't in x axis");
-}else{xocup = true; puts ("Objects ARE in x axis");}
-printf("%d, %d\n", a.y + a.height, b.y + b.height);
-if(xocup && a.y + a.height == b.y + b.height + 4){a.canJump = true; printf("Player can jump!\n");}}
-return a;
+ if(ycoll && xocup){a.yvel = 0;}
+ printf("Finishing collideNew function with an xvel of %d and a yvel of %d1\n", a.xvel, a.yvel);
+ return a;
 }
-
 body updateBody(body b, body g, body w, bool key[])
 {
  puts("Updating a body!");
@@ -141,8 +142,8 @@ body updateBody(body b, body g, body w, bool key[])
   b.yvel = b.yvel + GRAVITY;
   printf("%d\n", b.yvel);
  }else{gravdelay++;}
- b = collide(b, g, false);
- b = collide(b, w, true);
+ b = collide(b, g);
+ b = collide(b, w);
  b.x = b.x + b.xvel;
  b.y = b.y + b.yvel;
  return b;
@@ -171,7 +172,7 @@ int main(int argc, char **argv)
  ALLEGRO_TIMER *timer = NULL;
  body player = newBody(40, 40, 10, 10, true, 8, 4, true);
  body ground = newBody(150, 400, 300, 80, false, 0, 0, false);
- body wall = newBody(300, 275, 40, 40, false, 0, 0, false);
+ body wall = newBody(300, 240, 40, 40, false, 0, 0, false);
  bool key[4] = { false, false, false, false };
  bool redraw = true;
  bool doexit = false;
