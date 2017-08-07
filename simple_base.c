@@ -76,9 +76,10 @@ puts("Starting new Collidenew function!");
   yocup = false;
   puts ("Objects aren't in y axis");
  }else{yocup = true; puts ("Objects ARE in y axis");}
+
  //Now to figure out if we even need to worry about the axises
  if(a.x + a.width + a.xvel < b.x - b.width || a.x - a.width + a.xvel > b.x + b.width){xmove = true; puts("No collide in X axis at all, skipping checks");}else{puts("Objects will collide in X"); xmove = false;}
- if(a.y + a.height + a.yvel < b.y - b.height || a.y - a.height + a.yvel > b.y + b.height){ymove = true; puts("No collide in y axis at all, skipping checks");}else{ymove = false; if(xocup){a.canJump = true;} puts("Player can jump, will collide in Y . . . ");}
+ if(a.y + a.height + a.yvel < b.y - b.height || a.y - a.height + a.yvel > b.y + b.height){ymove = true; if(a.yvel != 0){a.canJump = false;} puts("No collide in y axis at all, skipping checks");}else{ymove = false; if(xocup && a.yvel <= 1){a.canJump = true;} puts("Player can jump, will collide in Y . . . ");}
 
  if(a.y + a.height + signOf(a.yvel) < b.y - b.height || a.y - a.height + signOf(a.yvel) > b.y + b.height)
  {
@@ -108,7 +109,7 @@ puts("Starting new Collidenew function!");
 
  }
  if(ycoll && xocup){a.yvel = 0;}
- printf("Finishing collideNew function with an xvel of %d and a yvel of %d1\n", a.xvel, a.yvel);
+ printf("Finishing collideNew function with an xvel of %d and a yvel of %d\n", a.xvel, a.yvel);
  return a;
 }
 body updateBody(body b, body g, body w, bool key[])
@@ -171,7 +172,7 @@ int main(int argc, char **argv)
  ALLEGRO_EVENT_QUEUE *event_queue = NULL;
  ALLEGRO_TIMER *timer = NULL;
  body player = newBody(40, 40, 10, 10, true, 8, 4, true);
- body ground = newBody(150, 400, 300, 80, false, 0, 0, false);
+ body ground = newBody(150, 400, 300, 40, false, 0, 0, false);
  body wall = newBody(300, 240, 40, 40, false, 0, 0, false);
  bool key[4] = { false, false, false, false };
  bool redraw = true;
