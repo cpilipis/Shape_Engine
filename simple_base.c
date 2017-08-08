@@ -113,7 +113,7 @@ puts("Starting new Collidenew function!");
  printf("Finishing collideNew function with an xvel of %d and a yvel of %d\n", a.xvel, a.yvel);
  return a;
 }
-body updateBody(body b, body g, body w, body p, bool key[])
+body updateBody(body b, body statics[], int staticcount, bool key[])
 {
  puts("Updating a body!");
  if (!b.isActive){return b;}
@@ -144,9 +144,8 @@ body updateBody(body b, body g, body w, body p, bool key[])
   b.yvel = b.yvel + GRAVITY;
   printf("%d\n", b.yvel);
  }else{gravdelay++;}
- b = collide(b, g);
- b = collide(b, w);
- b = collide(b, p);
+
+ for(int i = 0; i < staticcount; i++){body g = statics[i]; b = collide(b, g);}
  b.x = b.x + b.xvel;
  b.y = b.y + b.yvel;
  return b;
@@ -177,6 +176,8 @@ int main(int argc, char **argv)
  body ground = newBody(150, 400, 300, 40, false, 0, 0, false);
  body wall = newBody(300, 240, 40, 40, false, 0, 0, false);
  body plat = newBody(250, 300, 20, 20, false, 0, 0, false);
+ body statics [3] = {ground, wall, plat};
+ int staticcount = 3;
  bool key[4] = { false, false, false, false };
  bool redraw = true;
  bool doexit = false;
@@ -243,7 +244,7 @@ int main(int argc, char **argv)
 
   if(ev.type == ALLEGRO_EVENT_TIMER)
   {
-   player = updateBody(player, ground, wall, plat, key);
+   player = updateBody(player, statics, staticcount, key);
    redraw = true;
   }
   else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
@@ -304,12 +305,15 @@ int main(int argc, char **argv)
    al_clear_to_color(al_map_rgb(0, 255, 255));
 
    drawBody(player);
-
-   drawBody(ground);
-
-   drawBody(wall);
-
-   drawBody(plat);
+   int i;
+   for(i = 0; i<staticcount; i++)
+   {
+    body g = statics[i];
+    drawBody(g);
+    puts ("Is this for loop even working???");
+   }
+   //body g = statics[0];
+   //drawBody(g);
 
    al_flip_display();
   }
