@@ -14,15 +14,19 @@ enum MYKEYS {
  KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT
 };
 
+enum MYDIR{DIR_LEFT, DIR_RIGHT};
 typedef struct body
 {
  int x;
  int y;
  int width;
  int height;
+ int wide;
+ int high; //high and wide are used for remembering how tall and wide something is supposed to be normally.
  int xvel;
  int yvel;
  int speed;
+ int direction;
  int jumppower;
  bool isControlled;
  bool isActive;
@@ -36,9 +40,12 @@ body newBody(int x, int y, int width, int height, bool isControlled, int jumphei
  f.y = y;
  f.width = width;
  f.height = height;
+ f.wide = width;
+ f.high = height;
  f.xvel = 0;
  f.yvel = 0;
  f.speed = speed;
+ f.direction = DIR_LEFT;
  f.jumppower = jumpheight;
  f.isControlled = isControlled;
  f.isActive = active;
@@ -125,17 +132,35 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
    b.canJump = false;
    puts ("Thing jumps!");
   }
+  if(key[KEY_DOWN])
+  {
+  b.height = b.high/2;
+  }else if(b.height == b.high/2){b.height = b.high; b.y = b.y - b.high/2;} //if player is crouched down, get them up
 
   if(key[KEY_LEFT])
   {
    b.xvel = -b.speed;
+   if (b.width == b.wide){b.x = b.x - b.wide/2;}
+   b.width = b.wide/2;
+   b.direction = DIR_LEFT;
    puts ("Thing walks left!");
   }
   else if(key[KEY_RIGHT])
   {
    b.xvel = b.speed;
+   if (b.width == b.wide){b.x = b.x + b.wide/2;}
+   b.width = b.wide/2;
+   b.direction = DIR_RIGHT;
    puts ("Thing walks right!");
-  }else{b.xvel -= signOf(b.xvel);}
+  }else
+  {
+   b.xvel -= signOf(b.xvel);
+   if(b.width == b.wide/2)
+   {
+    if(b.direction == DIR_LEFT){b.x = b.x + b.width;}else{b.x = b.x - b.width;}
+   }
+   b.width = b.wide;
+  }
  }
  if(gravdelay == GRAVTICK)
  {
