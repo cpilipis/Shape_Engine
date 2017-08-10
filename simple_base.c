@@ -135,7 +135,7 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
   {
    b.xvel = b.speed;
    puts ("Thing walks right!");
-  }else{b.xvel = 0;}
+  }else{b.xvel -= signOf(b.xvel);}
  }
  if(gravdelay == GRAVTICK)
  {
@@ -162,7 +162,7 @@ void drawBody(body b)
   al_draw_rectangle(b.x - b.width, b.y - b.height, b.x + b.width, b.y + b.height, al_map_rgb(255, 0, 0), 0);
  }
  if(b.isControlled)
- {
+ { //Draw a dot in the center of player objects
   al_draw_rectangle(b.x, b.y, b.x + 1, b.y + 1, al_map_rgb(255, 0, 0), 0);
  }
 }
@@ -174,10 +174,13 @@ int main(int argc, char **argv)
  ALLEGRO_TIMER *timer = NULL;
  body player = newBody(40, 40, 10, 10, true, 8, 4, true);
  body ground = newBody(150, 400, 300, 40, false, 0, 0, false);
- body wall = newBody(300, 240, 40, 40, false, 0, 0, false);
+ body wall = newBody(335, 200, 75, 1, false, 0, 0, false);
+ body wallwall = newBody(260, 240, 1, 40, false, 0, 0, false);
+ body otherwall = newBody(290, 200, 1, 75, false, 0, 0, false);
  body plat = newBody(250, 300, 20, 20, false, 0, 0, false);
- body statics [3] = {ground, wall, plat};
- int staticcount = 3;
+ body poo = newBody(500, 100, 40, 1, false, 0, 0, false);
+ body statics [] = {ground, wall, plat, poo, wallwall, otherwall};
+ int staticcount = 6;
  bool key[4] = { false, false, false, false };
  bool redraw = true;
  bool doexit = false;
