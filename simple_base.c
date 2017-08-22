@@ -10,11 +10,13 @@ const int SCREEN_H = 480;
 const int GRAVITY = 1;
 const int GRAVTICK = 2;
 int gravdelay = 0;
+
 enum MYKEYS {
  KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT
 };
 
 enum MYDIR{DIR_LEFT, DIR_RIGHT};
+
 typedef struct body
 {
  int x;
@@ -134,6 +136,7 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
   }
   if(key[KEY_DOWN])
   {
+  if(b.height == b.high){b.y = b.y + b.height/2;}
   b.height = b.high/2;
   }else if(b.height == b.high/2){b.height = b.high; b.y = b.y - b.high/2;} //if player is crouched down, get them up
 
@@ -201,11 +204,12 @@ int main(int argc, char **argv)
  body ground = newBody(150, 400, 300, 40, false, 0, 0, false);
  body wall = newBody(335, 200, 75, 1, false, 0, 0, false);
  body wallwall = newBody(260, 240, 1, 40, false, 0, 0, false);
- body otherwall = newBody(290, 200, 1, 75, false, 0, 0, false);
+ body otherwall = newBody(320, 200, 1, 75, false, 0, 0, false);
+ body superotherwall = newBody(325, 200, 1, 75, false, 0, 0, false);
  body plat = newBody(250, 300, 20, 20, false, 0, 0, false);
  body poo = newBody(500, 100, 40, 1, false, 0, 0, false);
- body statics [] = {ground, wall, plat, poo, wallwall, otherwall};
- int staticcount = 6;
+ body statics [] = {ground, wall, plat, poo, wallwall, otherwall, superotherwall};
+ int staticcount = 7;
  bool key[4] = { false, false, false, false };
  bool redraw = true;
  bool doexit = false;
