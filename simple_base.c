@@ -9,10 +9,14 @@ const int SCREEN_W = 640;
 const int SCREEN_H = 480;
 const int GRAVITY = 1;
 const int GRAVTICK = 2;
+const bool MORPHY = false;
 int gravdelay = 0;
+
 enum MYKEYS {
  KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT
 };
+
+enum MYDIR{DIR_LEFT, DIR_RIGHT};
 
 typedef struct body
 {
@@ -20,9 +24,12 @@ typedef struct body
  int y;
  int width;
  int height;
+ int wide;
+ int high; //high and wide are used for remembering how tall and wide something is supposed to be normally.
  int xvel;
  int yvel;
  int speed;
+ int direction;
  int jumppower;
  bool isControlled;
  bool isActive;
@@ -36,9 +43,12 @@ body newBody(int x, int y, int width, int height, bool isControlled, int jumphei
  f.y = y;
  f.width = width;
  f.height = height;
+ f.wide = width;
+ f.high = height;
  f.xvel = 0;
  f.yvel = 0;
  f.speed = speed;
+ f.direction = DIR_LEFT;
  f.jumppower = jumpheight;
  f.isControlled = isControlled;
  f.isActive = active;
@@ -125,17 +135,36 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
    b.canJump = false;
    puts ("Thing jumps!");
   }
+  if(key[KEY_DOWN] && MORPHY)
+  {
+  if(b.height == b.high){b.y = b.y + b.height/2;}
+  b.height = b.high/2;
+  }else if(b.height == b.high/2 && MORPHY){b.height = b.high; b.y = b.y - b.high/2;} //if player is crouched down, get them up
 
   if(key[KEY_LEFT])
   {
    b.xvel = -b.speed;
+   if (b.width == b.wide && MORPHY){b.x = b.x - b.wide/2;}
+   if(MORPHY){b.width = b.wide/2;}
+   b.direction = DIR_LEFT;
    puts ("Thing walks left!");
   }
   else if(key[KEY_RIGHT])
   {
    b.xvel = b.speed;
+   if (b.width == b.wide && MORPHY){b.x = b.x + b.wide/2;}
+   if (MORPHY){b.width = b.wide/2;}
+   b.direction = DIR_RIGHT;
    puts ("Thing walks right!");
-  }else{b.xvel -= signOf(b.xvel);}
+  }else
+  {
+   b.xvel -= signOf(b.xvel);
+   if(b.width == b.wide/2)
+   {
+    if(b.direction == DIR_LEFT){b.x = b.x + b.width;}else{b.x = b.x - b.width;}
+   }
+   b.width = b.wide;
+  }
  }
  if(gravdelay == GRAVTICK)
  {
@@ -172,15 +201,16 @@ int main(int argc, char **argv)
  ALLEGRO_DISPLAY *display = NULL;
  ALLEGRO_EVENT_QUEUE *event_queue = NULL;
  ALLEGRO_TIMER *timer = NULL;
- body player = newBody(40, 40, 10, 10, true, 8, 4, true);
+ body player = newBody(40, 40, 30, 30, true, 8, 4, true);
  body ground = newBody(150, 400, 300, 40, false, 0, 0, false);
  body wall = newBody(335, 200, 75, 1, false, 0, 0, false);
  body wallwall = newBody(260, 240, 1, 40, false, 0, 0, false);
- body otherwall = newBody(290, 200, 1, 75, false, 0, 0, false);
+ body otherwall = newBody(320, 200, 1, 75, false, 0, 0, false);
+ body superotherwall = newBody(325, 200, 1, 75, false, 0, 0, false);
  body plat = newBody(250, 300, 20, 20, false, 0, 0, false);
  body poo = newBody(500, 100, 40, 1, false, 0, 0, false);
- body statics [] = {ground, wall, plat, poo, wallwall, otherwall};
- int staticcount = 6;
+ body statics [] = {ground, wall, plat, poo, wallwall, otherwall, superotherwall};
+ int staticcount = 7;
  bool key[4] = { false, false, false, false };
  bool redraw = true;
  bool doexit = false;
