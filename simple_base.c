@@ -9,6 +9,7 @@ const int SCREEN_W = 640;
 const int SCREEN_H = 480;
 const int GRAVITY = 1;
 const int GRAVTICK = 2;
+const bool MORPHY = false;
 int gravdelay = 0;
 
 enum MYKEYS {
@@ -134,25 +135,25 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
    b.canJump = false;
    puts ("Thing jumps!");
   }
-  if(key[KEY_DOWN])
+  if(key[KEY_DOWN] && MORPHY)
   {
   if(b.height == b.high){b.y = b.y + b.height/2;}
   b.height = b.high/2;
-  }else if(b.height == b.high/2){b.height = b.high; b.y = b.y - b.high/2;} //if player is crouched down, get them up
+  }else if(b.height == b.high/2 && MORPHY){b.height = b.high; b.y = b.y - b.high/2;} //if player is crouched down, get them up
 
   if(key[KEY_LEFT])
   {
    b.xvel = -b.speed;
-   if (b.width == b.wide){b.x = b.x - b.wide/2;}
-   b.width = b.wide/2;
+   if (b.width == b.wide && MORPHY){b.x = b.x - b.wide/2;}
+   if(MORPHY){b.width = b.wide/2;}
    b.direction = DIR_LEFT;
    puts ("Thing walks left!");
   }
   else if(key[KEY_RIGHT])
   {
    b.xvel = b.speed;
-   if (b.width == b.wide){b.x = b.x + b.wide/2;}
-   b.width = b.wide/2;
+   if (b.width == b.wide && MORPHY){b.x = b.x + b.wide/2;}
+   if (MORPHY){b.width = b.wide/2;}
    b.direction = DIR_RIGHT;
    puts ("Thing walks right!");
   }else
@@ -200,7 +201,7 @@ int main(int argc, char **argv)
  ALLEGRO_DISPLAY *display = NULL;
  ALLEGRO_EVENT_QUEUE *event_queue = NULL;
  ALLEGRO_TIMER *timer = NULL;
- body player = newBody(40, 40, 10, 10, true, 8, 4, true);
+ body player = newBody(40, 40, 30, 30, true, 8, 4, true);
  body ground = newBody(150, 400, 300, 40, false, 0, 0, false);
  body wall = newBody(335, 200, 75, 1, false, 0, 0, false);
  body wallwall = newBody(260, 240, 1, 40, false, 0, 0, false);
