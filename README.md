@@ -9,6 +9,7 @@ Built mainly so I could practice my C, it can be used to make the simplest of pl
 * Uses Arrow Keys for input
 * Runs at 60 Frames Per Second
 * Is small in size
+* Currently only uses a 640 by 480 window
 
 ##Dependencies
 All you need to compile this is Allegro 5, and all it's dependencies. If you're on Linux, you should install pkg-config if you don't already have it. Go to [the website](liballeg.org) for Allegro for information on how to install it other than what I can provide here. On Debian I was able to install it through the package manager on the terminal, although I don't know about other distributions. On Mac, I had to instal Brew and then get it from there, although if you like Headaches you can probably install Allegro 5 without Brew and just get it and all it's dependencies from scratch. On windows, you're on your own.
@@ -19,7 +20,9 @@ On Mac, I got Allegro 5 and all its dependencies from Brew, and then ran `clang 
 On Windows, you're on your own for compilation. I don't know what the deal is on windows, and I won't shame you for installing a Linux virtual machine to compile and run this.
 
 ##Planned features/stuff I want to do at some point
-* Allow the engine to read stuff from text files to build a level so I don't have to recompile to change levels
+* Add more features to the text leveling system so that the text file can spawn entities, specify player starting position, specify which level to go to next, etc.
+* Oh, and entities don't exist yet, so it would be cool to make a little framework.
+* Write a separate program to make the building of levels easier. One will just click and drag to make squares and can then save it, or use little dialogs to automate some stuff (creating the ground faster, putting a square at a nice exact coordinate, etc).
 * Add a leveling system so that the game can go from level to level, or a scrolling system to scroll the screen as the character runs across
 * Network the game so that two players can race eachother across a set of levels to get to the exit
-* Make a program that reads books from [The Library of Babel](libraryofbabel.info) and uses the gibberish to generate a level file, although that's separate from this game base. 
+* Make a program that reads books from [The Library of Babel](libraryofbabel.info) and uses the gibberish to generate a level file, although that's separate from this game base. I'll probably just whip up a python script to generate a level file for it and then tell my game to read that file. 
