@@ -1,5 +1,6 @@
 //This is the tables branch
 #include <stdio.h>
+#include <stdlib.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 #include "simplestuff.c" //Why is this in a separate file? It only defines ONE new function! One!
@@ -54,6 +55,26 @@ body newBody(int x, int y, int width, int height, bool isControlled, int jumphei
  f.isActive = active;
  f.canJump = false;
  return f;
+}
+
+body newStatic(int x1, int y1, int x2, int y2)
+{
+ body s;
+ s.width = (x2 - x1)/2;
+ s.height = (y2 - y1)/2;
+ s.x = x1 + s.width ;
+ s.y = y1 + s.height;
+ s.wide = s.width;
+ s.high = s.height;
+ s.xvel = 0;
+ s.yvel = 0;
+ s.speed = 0;
+ s.direction = DIR_RIGHT;
+ s.jumppower = 0;
+ s.isControlled = false;
+ s.isActive = false;
+ s.canJump = false;
+ return s;
 }
 
 body collide(body a, body b)
@@ -123,6 +144,7 @@ puts("Starting new Collidenew function!");
  printf("Finishing collideNew function with an xvel of %d and a yvel of %d\n", a.xvel, a.yvel);
  return a;
 }
+
 body updateBody(body b, body statics[], int staticcount, bool key[])
 {
  puts("Updating a body!");
@@ -201,7 +223,9 @@ int main(int argc, char **argv)
  ALLEGRO_DISPLAY *display = NULL;
  ALLEGRO_EVENT_QUEUE *event_queue = NULL;
  ALLEGRO_TIMER *timer = NULL;
+
  body player = newBody(40, 40, 30, 30, true, 8, 4, true);
+/*
  body ground = newBody(150, 400, 300, 40, false, 0, 0, false);
  body wall = newBody(335, 200, 75, 1, false, 0, 0, false);
  body wallwall = newBody(260, 240, 1, 40, false, 0, 0, false);
@@ -211,9 +235,50 @@ int main(int argc, char **argv)
  body poo = newBody(500, 100, 40, 1, false, 0, 0, false);
  body statics [] = {ground, wall, plat, poo, wallwall, otherwall, superotherwall};
  int staticcount = 7;
+ */
  bool key[4] = { false, false, false, false };
  bool redraw = true;
  bool doexit = false;
+
+ FILE *levl;
+ char ch;
+
+ levl = fopen(argv[1], "r");
+ if(levl == NULL)
+ {
+  printf("Cannot open file! \n");
+  exit (0);
+ }
+ ch = fgetc(levl);
+ body statics[10];
+ int staticcount = 0;
+ while (ch != EOF)
+ {
+  printf("Char is not EOF!\n");
+  if (ch == 's')
+  {
+   printf("Char is s. Beginning if statement.\n");
+   fgetc(levl);
+   char arg = fgetc(levl);
+   char line[80];
+   int numbs[4];
+   int charcounter = 0;
+   int numbcounter = 0;
+   while(arg != '\n' && arg != EOF)
+   {
+    printf("Argument is not a new line!\n");
+    if (isdigit(arg)){line[charcounter] = arg; charcounter = charcounter + 1; printf("Argument is a number\n");}else{printf("Argument is not a number. Possibly space.\n"); charcounter = 0; numbs[numbcounter] = atoi(line); numbcounter = numbcounter + 1;
+     for(int i = 0; i < 80; i++){line[i] = 0;}}
+    arg = fgetc(levl);
+   }
+   printf("Wrapping stuff up, time to add a static body.\n");
+   statics[staticcount] = newStatic(numbs[0], numbs[1], numbs[2], numbs[3]);
+   staticcount++;
+   printf ("So far we have %d static objects.\n");
+   ch = fgetc(levl);
+  }
+ }
+ fclose(levl);
 
  if(!al_init())
  {
