@@ -6,11 +6,13 @@
 #include "simplestuff.c" //Why is this in a separate file? It only defines ONE new function! One!
 
 const float FPS = 60;
-const int SCREEN_W = 640;
-const int SCREEN_H = 480;
+int SCREEN_W = 640;
+int SCREEN_H = 480;
 const int GRAVITY = 1;
 const int GRAVTICK = 2;
-const bool MORPHY = false;
+bool MORPHY = false;
+int xscreen = 0;
+int yscreen = 0;
 int gravdelay = 0;
 
 enum MYKEYS {
@@ -204,17 +206,21 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
 
 void drawBody(body b)
 {
+ int sideLeft = b.x - b.width - SCREEN_W * xscreen;
+ int sideRight = b.x + b.width - SCREEN_W * xscreen;
+ int sideTop = b.y - b.height - SCREEN_H * yscreen;
+ int sideBottom = b.y + b.height - SCREEN_H * yscreen;
  if (!b.isActive)
  {
-  al_draw_filled_rectangle(b.x - b.width, b.y - b.height, b.x + b.width, b.y + b.height, al_map_rgb(255, 0, 0));
+  al_draw_filled_rectangle(sideLeft, sideTop, sideRight, sideBottom, al_map_rgb(255, 0, 0));
  }
  else
  {
-  al_draw_rectangle(b.x - b.width, b.y - b.height, b.x + b.width, b.y + b.height, al_map_rgb(255, 0, 0), 0);
+  al_draw_rectangle(sideLeft, sideTop, sideRight, sideBottom, al_map_rgb(255, 0, 0), 0);
  }
  if(b.isControlled)
  { //Draw a dot in the center of player objects
-  al_draw_rectangle(b.x, b.y, b.x + 1, b.y + 1, al_map_rgb(255, 0, 0), 0);
+  al_draw_rectangle(b.x - SCREEN_W * xscreen, b.y - SCREEN_H * yscreen, b.x + 1 - SCREEN_W * xscreen, b.y + 1 - SCREEN_H * yscreen, al_map_rgb(255, 0, 0), 0);
  }
 }
 
@@ -224,18 +230,8 @@ int main(int argc, char **argv)
  ALLEGRO_EVENT_QUEUE *event_queue = NULL;
  ALLEGRO_TIMER *timer = NULL;
 
- body player = newBody(40, 40, 30, 30, true, 8, 4, true);
-/*
- body ground = newBody(150, 400, 300, 40, false, 0, 0, false);
- body wall = newBody(335, 200, 75, 1, false, 0, 0, false);
- body wallwall = newBody(260, 240, 1, 40, false, 0, 0, false);
- body otherwall = newBody(320, 200, 1, 75, false, 0, 0, false);
- body superotherwall = newBody(325, 200, 1, 75, false, 0, 0, false);
- body plat = newBody(250, 300, 20, 20, false, 0, 0, false);
- body poo = newBody(500, 100, 40, 1, false, 0, 0, false);
- body statics [] = {ground, wall, plat, poo, wallwall, otherwall, superotherwall};
- int staticcount = 7;
- */
+ body player = newBody(40, 40, 15, 15, true, 8, 4, true);
+
  bool key[4] = { false, false, false, false };
  bool redraw = true;
  bool doexit = false;
@@ -246,7 +242,7 @@ int main(int argc, char **argv)
  levl = fopen(argv[1], "r");
  if(levl == NULL)
  {
-  printf("Cannot open file! \n");
+  printf("Please specify a filename for the level. For example, ./Shape example_level.txt should run the example level.\n");
   exit (0);
  }
  ch = fgetc(levl);
@@ -267,18 +263,24 @@ int main(int argc, char **argv)
    while(arg != '\n' && arg != EOF)
    {
     printf("Argument is not a new line!\n");
-    if (isdigit(arg)){line[charcounter] = arg; charcounter = charcounter + 1; printf("Argument is a number\n");}else{printf("Argument is not a number. Possibly space.\n"); charcounter = 0; numbs[numbcounter] = atoi(line); numbcounter = numbcounter + 1;
+    if (isdigit(arg)){line[charcounter] = arg; charcounter = charcounter + 1; printf("Argument is a number\n");}else{printf("Argument is not a number. Possibly space, or a semi colon.\n"); charcounter = 0; numbs[numbcounter] = atoi(line); numbcounter = numbcounter + 1;
      for(int i = 0; i < 80; i++){line[i] = 0;}}
     arg = fgetc(levl);
    }
    printf("Wrapping stuff up, time to add a static body.\n");
    statics[staticcount] = newStatic(numbs[0], numbs[1], numbs[2], numbs[3]);
    staticcount++;
-   printf ("So far we have %d static objects.\n");
+   printf ("So far we have %d static objects.\n", staticcount);
    ch = fgetc(levl);
   }
  }
  fclose(levl);
+
+ for(int i = 2; i < argc; i++)
+ {
+  if (strcmp("-res", argv[i]) == 0){printf("Hey it works!\n"); SCREEN_W = atoi(argv[i+1]); SCREEN_H = atoi(argv[i+2]);}
+  if (strcmp("-morph", argv[i]) == 0){MORPHY = true;}
+ }
 
  if(!al_init())
  {
@@ -343,11 +345,17 @@ int main(int argc, char **argv)
   if(ev.type == ALLEGRO_EVENT_TIMER)
   {
    player = updateBody(player, statics, staticcount, key);
+   //screen switching for x
+   if(player.x > SCREEN_W*(xscreen+1)){xscreen = xscreen + 1;}
+   else if (player.x < SCREEN_W * xscreen){xscreen = xscreen - 1;}
+   //screen switching for y
+   if(player.y > SCREEN_H*(yscreen+1)){yscreen = yscreen + 1;}
+   else if (player.y < SCREEN_H * yscreen){yscreen = yscreen - 1;}
    redraw = true;
   }
   else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
   {
-   break;
+   doexit = true;
   }
   else if(ev.type == ALLEGRO_EVENT_KEY_DOWN)
   {
@@ -408,10 +416,7 @@ int main(int argc, char **argv)
    {
     body g = statics[i];
     drawBody(g);
-    puts ("Is this for loop even working???");
    }
-   //body g = statics[0];
-   //drawBody(g);
 
    al_flip_display();
   }
