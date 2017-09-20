@@ -6,11 +6,11 @@
 #include "simplestuff.c" //Why is this in a separate file? It only defines ONE new function! One!
 
 const float FPS = 60;
-const int SCREEN_W = 640;
-const int SCREEN_H = 480;
+int SCREEN_W = 640;
+int SCREEN_H = 480;
 const int GRAVITY = 1;
 const int GRAVTICK = 2;
-const bool MORPHY = false;
+bool MORPHY = false;
 int xscreen = 0;
 int yscreen = 0;
 int gravdelay = 0;
@@ -284,11 +284,11 @@ int main(int argc, char **argv)
  }
  fclose(levl);
 
- /*for(int i = 2; i < argc; i++)
+ for(int i = 2; i < argc; i++)
  {
   if (strcmp("-res", argv[i]) == 0){printf("Hey it works!\n"); SCREEN_W = atoi(argv[i+1]); SCREEN_H = atoi(argv[i+2]);}
   if (strcmp("-morph", argv[i]) == 0){MORPHY = true;}
- }*/
+ }
 
  if(!al_init())
  {
