@@ -6,11 +6,11 @@
 #include "simplestuff.c" //Why is this in a separate file? It only defines ONE new function! One!
 
 const float FPS = 60;
-int SCREEN_W = 640;
-int SCREEN_H = 480;
+const int SCREEN_W = 640;
+const int SCREEN_H = 480;
 const int GRAVITY = 1;
 const int GRAVTICK = 2;
-bool MORPHY = false;
+const bool MORPHY = false;
 int xscreen = 0;
 int yscreen = 0;
 int gravdelay = 0;
@@ -209,7 +209,9 @@ void drawBody(body b)
  int sideLeft = b.x - b.width - SCREEN_W * xscreen;
  int sideRight = b.x + b.width - SCREEN_W * xscreen;
  int sideTop = b.y - b.height - SCREEN_H * yscreen;
- int sideBottom = b.y + b.height - SCREEN_H * yscreen;
+ int sideBottom = b.y + b.height - SCREEN_H * yscreen; /*To scroll the screen when the player reaches the edge, we change the variable x(y)screen
+and draw everything back SCREEN_W(H) pixles, times x(y)screen.
+If it's 0, the player is on the first part of the level, if it's 1, they've gone right (or down) one screen, etc.*/
  if (!b.isActive)
  {
   al_draw_filled_rectangle(sideLeft, sideTop, sideRight, sideBottom, al_map_rgb(255, 0, 0));
@@ -246,7 +248,10 @@ int main(int argc, char **argv)
   exit (0);
  }
  ch = fgetc(levl);
- body statics[10];
+ int staticLimit = 30;//Don't store more statics than this variable allows for
+ body statics[staticLimit]; //TODO: IMPLEMENT A SYSTEM THAT COUNTS THE STATIC OBJECTS IN A FILE
+//RATHER THAN GIVE THE STATICS VARIABLE AN ARBITARY LIMIT
+//HOW I WAS ABLE TO STORE 14 STATIC OBJECTS IN A TABLE THAT ONLY HAD ROOM FOR 10 IS BEYOND ME
  int staticcount = 0;
  while (ch != EOF)
  {
@@ -268,19 +273,22 @@ int main(int argc, char **argv)
     arg = fgetc(levl);
    }
    printf("Wrapping stuff up, time to add a static body.\n");
+   //if (staticcount <= 10)
+   //{
    statics[staticcount] = newStatic(numbs[0], numbs[1], numbs[2], numbs[3]);
    staticcount++;
+   //}else{printf("The game cannot currently store more than 10 statics. Sorry.\n");}
    printf ("So far we have %d static objects.\n", staticcount);
    ch = fgetc(levl);
   }
  }
  fclose(levl);
 
- for(int i = 2; i < argc; i++)
+ /*for(int i = 2; i < argc; i++)
  {
   if (strcmp("-res", argv[i]) == 0){printf("Hey it works!\n"); SCREEN_W = atoi(argv[i+1]); SCREEN_H = atoi(argv[i+2]);}
   if (strcmp("-morph", argv[i]) == 0){MORPHY = true;}
- }
+ }*/
 
  if(!al_init())
  {
