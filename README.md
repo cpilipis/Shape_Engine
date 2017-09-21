@@ -5,7 +5,9 @@ Built mainly so I could practice my C, it can be used to make the simplest of pl
 ##Current features
 * Uses Allegro's Primitives library for drawing shapes.
 * Has Pixel Perfect bounding box collision.
-* Uses Tables to store the data for levels and is in the process of being adapted to read level data from text files.
+* Reads levels from a file specified as the first command line argument to the program
+* The screen jumps over if the player moves beyond the boundaries, allowing for basic traversal of a large level.
+* Can be adjusted to any resoluton
 * Uses Arrow Keys for input
 * Runs at 60 Frames Per Second
 * Is small in size
@@ -18,8 +20,14 @@ On linux, I ran `gcc simple_base.c -Wall -o Shape $(pkg-config --cflags --libs a
 On Mac, I got Allegro 5 and all its dependencies from Brew, and then ran `clang simple_base.c -o Shape_mac -lallegro -lallegro_main -lallegro_primitives`. At least on my Mac it had clang by default, and running `gcc` would actually run `clang` without telling me. But maybe I'm wrong and it's the other way around. Maybe they're practically the same and clang just has 2 extra bells and whistles. I can't tell at this point.
 On Windows, you're on your own for compilation. I don't know what the deal is on windows, and I won't shame you for installing a Linux virtual machine to compile and run this.
 
+##Running it
+This repository comes with an example level that you can fire up right after compilation! If you're on linux or Mac, just type `./Shape example_level.txt` and it'll run in a 640X480 window. If you want a larger or smaller resolution, you can specify with the -res argument and provide 2 numbers as different arguments, like so:
+`./Shape example_level.txt -res 1920 1080` (please note all arguments go after the level file is provide. Doing `./Shape -res 1920 1080` it will look for a file called `-res`.)
+You can also get an alternate movement system with the -morph argument.
+
 ##Planned features/stuff I want to do at some point
-* Allow the engine to read stuff from text files to build a level so I don't have to recompile to change levels
-* Add a leveling system so that the game can go from level to level, or a scrolling system to scroll the screen as the character runs across
+* Add more to the level engine than just changing static body location. For example, it would be cool to be able to define player spawns within the level file.
+* Add smooth screen scrolling as an option so levels don't have to be designed for screens.
 * Network the game so that two players can race eachother across a set of levels to get to the exit
 * Make a program that reads books from [The Library of Babel](libraryofbabel.info) and uses the gibberish to generate a level file, although that's separate from this game base. 
+* Make a separate program to build levels within a GUI
