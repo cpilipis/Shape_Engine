@@ -29,5 +29,5 @@ You can also get an alternate movement system with the -morph argument.
 * Add more to the level engine than just changing static body location. For example, it would be cool to be able to define player spawns within the level file.
 * Add smooth screen scrolling as an option so levels don't have to be designed for screens.
 * Network the game so that two players can race eachother across a set of levels to get to the exit
-* Make a program that reads books from [The Library of Babel](libraryofbabel.info) and uses the gibberish to generate a level file, although that's separate from this game base. 
+* Make a program that reads books from [The Library of Babel](http://www.libraryofbabel.info) and uses the gibberish to generate a level file, although that's separate from this game base. 
 * Make a separate program to build levels within a GUI
