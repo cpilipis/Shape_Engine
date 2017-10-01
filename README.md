@@ -22,12 +22,12 @@ On Mac, I got Allegro 5 and all its dependencies from Brew, and then ran `clang 
 On Windows, you're on your own for compilation. I don't know what the deal is on windows, and I won't shame you for installing a Linux virtual machine to compile and run this.
 
 <<<<<<< HEAD
-##Running it
+## Running it
 This repository comes with an example level that you can fire up right after compilation! If you're on linux or Mac, just type `./Shape example_level.txt` and it'll run in a 640X480 window. After that, just use the arrow keys to move around. If you want a larger or smaller resolution, you can specify with the -res argument and provide 2 numbers as different arguments, like so:
 `./Shape example_level.txt -res 1920 1080` (please note all arguments go after the level file is provide. Doing `./Shape -res 1920 1080` it will look for a file called `-res`.)
 You can also get an alternate movement system by toggling "abilities" - different abilities regarding movement. `./Shape example_level -ability morph` makes the player morph around and `./Shape example_level -ability boost` adds the ability to move twice as fast by holding the space key.
 
-##Planned features/stuff I want to try at some point
+## Planned features/stuff I want to try at some point
 * Add more to the level engine than just changing static body location. For example, it would be cool to be able to define player spawns within the level file, or an entity to send the player to another part of the level.
 * Add an option for parts of the level to loop around, as seen in the game X-pilot.
 * Network the game so that two players can race eachother across a set of levels to get to the exit
