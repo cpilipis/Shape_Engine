@@ -10,16 +10,19 @@ int SCREEN_W = 640;
 int SCREEN_H = 480;
 const int GRAVITY = 1;
 const int GRAVTICK = 2;
-bool MORPHY = false;
 int xscreen = 0;
 int yscreen = 0;
+bool doScroll = true;
+int scrollBoundaries = 200;
 int gravdelay = 0;
 
 enum MYKEYS {
- KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT
+ KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_SPACE
 };
 
 enum MYDIR{DIR_LEFT, DIR_RIGHT};
+
+enum ABIL{ABIL_NONE, ABIL_TELE, ABIL_BOOST, ABIL_MORPH};
 
 typedef struct body
 {
@@ -32,14 +35,16 @@ typedef struct body
  int xvel;
  int yvel;
  int speed;
+ int normSpeed; //used for remembering how fast something goes normally
  int direction;
  int jumppower;
  bool isControlled;
  bool isActive;
  bool canJump;
+ int ability;
 } body;
 
-body newBody(int x, int y, int width, int height, bool isControlled, int jumpheight, int speed, bool active)
+body newBody(int x, int y, int width, int height, bool isControlled, int jumpheight, int speed, bool active, int ability)
 {
  body f;
  f.x = x;
@@ -51,11 +56,13 @@ body newBody(int x, int y, int width, int height, bool isControlled, int jumphei
  f.xvel = 0;
  f.yvel = 0;
  f.speed = speed;
+ f.normSpeed = speed;
  f.direction = DIR_LEFT;
  f.jumppower = jumpheight;
  f.isControlled = isControlled;
  f.isActive = active;
  f.canJump = false;
+ f.ability = ability;
  return f;
 }
 
@@ -71,11 +78,13 @@ body newStatic(int x1, int y1, int x2, int y2)
  s.xvel = 0;
  s.yvel = 0;
  s.speed = 0;
+ s.normSpeed = 0;
  s.direction = DIR_RIGHT;
  s.jumppower = 0;
  s.isControlled = false;
  s.isActive = false;
  s.canJump = false;
+ s.ability = ABIL_NONE;
  return s;
 }
 
@@ -159,25 +168,25 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
    b.canJump = false;
    puts ("Thing jumps!");
   }
-  if(key[KEY_DOWN] && MORPHY)
+  if(key[KEY_DOWN] && b.ability == ABIL_MORPH)
   {
   if(b.height == b.high){b.y = b.y + b.height/2;}
   b.height = b.high/2;
-  }else if(b.height == b.high/2 && MORPHY){b.height = b.high; b.y = b.y - b.high/2;} //if player is crouched down, get them up
+  }else if(b.height == b.high/2 && b.ability == ABIL_MORPH){b.height = b.high; b.y = b.y - b.high/2;} //if player is crouched down, get them up
 
   if(key[KEY_LEFT])
   {
    b.xvel = -b.speed;
-   if (b.width == b.wide && MORPHY){b.x = b.x - b.wide/2;}
-   if(MORPHY){b.width = b.wide/2;}
+   if (b.width == b.wide && b.ability == ABIL_MORPH){b.x = b.x - b.wide/2;}
+   if(b.ability == ABIL_MORPH){b.width = b.wide/2;}
    b.direction = DIR_LEFT;
    puts ("Thing walks left!");
   }
   else if(key[KEY_RIGHT])
   {
    b.xvel = b.speed;
-   if (b.width == b.wide && MORPHY){b.x = b.x + b.wide/2;}
-   if (MORPHY){b.width = b.wide/2;}
+   if (b.width == b.wide && b.ability == ABIL_MORPH){b.x = b.x + b.wide/2;}
+   if (b.ability == ABIL_MORPH){b.width = b.wide/2;}
    b.direction = DIR_RIGHT;
    puts ("Thing walks right!");
   }else
@@ -189,6 +198,10 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
    }
    b.width = b.wide;
   }
+  if (key[KEY_SPACE] && b.ability != ABIL_NONE && b.ability != ABIL_MORPH)
+  {
+   if(b.ability == ABIL_BOOST){b.speed = b.normSpeed * 2;}
+  }else{b.speed = b.normSpeed;}
  }
  if(gravdelay == GRAVTICK)
  {
@@ -206,12 +219,37 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
 
 void drawBody(body b)
 {
- int sideLeft = b.x - b.width - SCREEN_W * xscreen;
- int sideRight = b.x + b.width - SCREEN_W * xscreen;
- int sideTop = b.y - b.height - SCREEN_H * yscreen;
- int sideBottom = b.y + b.height - SCREEN_H * yscreen; /*To scroll the screen when the player reaches the edge, we change the variable x(y)screen
-and draw everything back SCREEN_W(H) pixles, times x(y)screen.
-If it's 0, the player is on the first part of the level, if it's 1, they've gone right (or down) one screen, etc.*/
+ int sideLeft;
+ int sideRight;
+ int sideTop;
+ int sideBottom;
+ int centx;
+ int centy;
+ if(doScroll)
+ {
+  sideLeft = b.x - b.width - xscreen;
+  sideRight = b.x + b.width - xscreen;
+  sideTop = b.y - b.height - yscreen;
+  sideBottom = b.y + b.height - yscreen;
+  centx = b.x - xscreen;
+  centy = b.y - yscreen;
+
+  /*to scroll as the player moves, we simply shift everything by the scroll variables. No more, no less.
+  The most complex part is the actual shifting of the scroll variables, in which we make a variable to store the value
+  that causes the screen to scroll when the player passes it in either direction. Then, we modify xscreen/yscreen when the
+  player passes that point.*/
+ }else{
+  sideLeft = b.x - b.width - SCREEN_W * xscreen;
+  sideRight = b.x + b.width - SCREEN_W * xscreen;
+  sideTop = b.y - b.height - SCREEN_H * yscreen;
+  sideBottom = b.y + b.height - SCREEN_H * yscreen;
+  centx = b.x - SCREEN_W * xscreen;
+  centy = b.y - SCREEN_H * yscreen;
+
+  /*To scroll the screen when the player reaches the edge, we change the variable x(y)screen
+  and draw everything back SCREEN_W(H) pixles, times x(y)screen.
+  If it's 0, the player is on the first part of the level, if it's 1, they've gone right (or down) one screen, etc.*/
+ }
  if (!b.isActive)
  {
   al_draw_filled_rectangle(sideLeft, sideTop, sideRight, sideBottom, al_map_rgb(255, 0, 0));
@@ -222,7 +260,7 @@ If it's 0, the player is on the first part of the level, if it's 1, they've gone
  }
  if(b.isControlled)
  { //Draw a dot in the center of player objects
-  al_draw_rectangle(b.x - SCREEN_W * xscreen, b.y - SCREEN_H * yscreen, b.x + 1 - SCREEN_W * xscreen, b.y + 1 - SCREEN_H * yscreen, al_map_rgb(255, 0, 0), 0);
+  al_draw_rectangle(centx, centy, centx + 1, centy + 1, al_map_rgb(255, 0, 0), 0);
  }
 }
 
@@ -231,10 +269,9 @@ int main(int argc, char **argv)
  ALLEGRO_DISPLAY *display = NULL;
  ALLEGRO_EVENT_QUEUE *event_queue = NULL;
  ALLEGRO_TIMER *timer = NULL;
-
- body player = newBody(40, 40, 15, 15, true, 8, 4, true);
-
- bool key[4] = { false, false, false, false };
+ ALLEGRO_COLOR pColor = al_map_rgb(255, 0, 0);
+ int playerAbility = ABIL_NONE;
+ bool key[5] = {false, false, false, false, false};
  bool redraw = true;
  bool doexit = false;
 
@@ -252,6 +289,8 @@ int main(int argc, char **argv)
  body statics[staticLimit]; //TODO: IMPLEMENT A SYSTEM THAT COUNTS THE STATIC OBJECTS IN A FILE
 //RATHER THAN GIVE THE STATICS VARIABLE AN ARBITARY LIMIT
 //HOW I WAS ABLE TO STORE 14 STATIC OBJECTS IN A TABLE THAT ONLY HAD ROOM FOR 10 IS BEYOND ME
+//IN FACT, THE COMPILER DIDNT EVEN THROW ANY WARNINGS AND THE GAME RAN FINE
+//THE ONLY REASON I NOTICED WAS THAT THE PROGRAM THREW AN ERROR WHEN I EXITED OUT OF IT
  int staticcount = 0;
  while (ch != EOF)
  {
@@ -268,8 +307,14 @@ int main(int argc, char **argv)
    while(arg != '\n' && arg != EOF)
    {
     printf("Argument is not a new line!\n");
-    if (isdigit(arg)){line[charcounter] = arg; charcounter = charcounter + 1; printf("Argument is a number\n");}else{printf("Argument is not a number. Possibly space, or a semi colon.\n"); charcounter = 0; numbs[numbcounter] = atoi(line); numbcounter = numbcounter + 1;
-     for(int i = 0; i < 80; i++){line[i] = 0;}}
+    if (isdigit(arg)){line[charcounter] = arg; charcounter = charcounter + 1; printf("Argument is a number\n");
+    }else{
+     printf("Argument is not a number. Possibly space, or a semi colon.\n");
+     charcounter = 0;
+     numbs[numbcounter] = atoi(line);
+     numbcounter = numbcounter + 1;
+     for(int i = 0; i < 80; i++){line[i] = 0;}
+    }
     arg = fgetc(levl);
    }
    printf("Wrapping stuff up, time to add a static body.\n");
@@ -284,11 +329,20 @@ int main(int argc, char **argv)
  }
  fclose(levl);
 
+ int charAbility = ABIL_NONE;
+
  for(int i = 2; i < argc; i++)
  {
   if (strcmp("-res", argv[i]) == 0){printf("Hey it works!\n"); SCREEN_W = atoi(argv[i+1]); SCREEN_H = atoi(argv[i+2]);}
-  if (strcmp("-morph", argv[i]) == 0){MORPHY = true;}
+  if (strcmp("-snapscreen", argv[i]) == 0){doScroll = false;}
+  if (strcmp("-ability", argv[i]) == 0)
+  {
+   if(strcmp(argv[i + 1], "morph") == 0){playerAbility = ABIL_MORPH;}
+   if(strcmp(argv[i + 1], "boost") == 0){playerAbility = ABIL_BOOST;}
+  }
  }
+
+ body player = newBody(210, 40, 15, 15, true, 8, 4, true, playerAbility);
 
  if(!al_init())
  {
@@ -353,12 +407,20 @@ int main(int argc, char **argv)
   if(ev.type == ALLEGRO_EVENT_TIMER)
   {
    player = updateBody(player, statics, staticcount, key);
-   //screen switching for x
-   if(player.x > SCREEN_W*(xscreen+1)){xscreen = xscreen + 1;}
-   else if (player.x < SCREEN_W * xscreen){xscreen = xscreen - 1;}
-   //screen switching for y
-   if(player.y > SCREEN_H*(yscreen+1)){yscreen = yscreen + 1;}
-   else if (player.y < SCREEN_H * yscreen){yscreen = yscreen - 1;}
+   if (doScroll)
+   {
+    if(player.x > SCREEN_W + xscreen - scrollBoundaries && player.xvel > 0){xscreen = xscreen + player.xvel;}
+    if(player.x < xscreen + scrollBoundaries && player.xvel < 0){xscreen = xscreen + player.xvel;}
+    if(player.y > SCREEN_H + yscreen - scrollBoundaries && player.yvel > 0){yscreen = yscreen + player.yvel;}
+    if(player.y < yscreen + scrollBoundaries && player.yvel <= 0){yscreen = yscreen + player.yvel;}
+   }else{
+    //screen switching for x
+    if(player.x > SCREEN_W*(xscreen+1)){xscreen = xscreen + 1;}
+    else if (player.x < SCREEN_W * xscreen){xscreen = xscreen - 1;}
+    //screen switching for y
+    if(player.y > SCREEN_H*(yscreen+1)){yscreen = yscreen + 1;}
+    else if (player.y < SCREEN_H * yscreen){yscreen = yscreen - 1;}
+   }
    redraw = true;
   }
   else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
@@ -384,6 +446,10 @@ int main(int argc, char **argv)
     case ALLEGRO_KEY_RIGHT:
      key[KEY_RIGHT] = true;
      break;
+
+    case ALLEGRO_KEY_SPACE:
+     key[KEY_SPACE] = true;
+     break;
    }
   }
   else if(ev.type == ALLEGRO_EVENT_KEY_UP)
@@ -408,6 +474,10 @@ int main(int argc, char **argv)
 
     case ALLEGRO_KEY_ESCAPE:
      doexit = true;
+     break;
+
+    case ALLEGRO_KEY_SPACE:
+     key[KEY_SPACE] = false;
      break;
    }
   }
