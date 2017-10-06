@@ -1,9 +1,8 @@
-//This is the tables branch
 #include <stdio.h>
 #include <stdlib.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
-#include "simplestuff.c" //Why is this in a separate file? It only defines ONE new function! One!
+#include "simplestuff.c" //Why is this in a separate file? It only defines ONE new function! One! And it's a function that C probably comes with in some math library anyways!
 
 const float FPS = 60;
 int SCREEN_W = 640;
@@ -275,8 +274,23 @@ int main(int argc, char **argv)
  bool redraw = true;
  bool doexit = false;
 
+ body players[3];
+ int playerCount = 0;
+
  FILE *levl;
  char ch;
+ int charAbility = ABIL_NONE;
+
+ for(int i = 2; i < argc; i++)
+ {
+  if (strcmp("-res", argv[i]) == 0){printf("Hey it works!\n"); SCREEN_W = atoi(argv[i+1]); SCREEN_H = atoi(argv[i+2]);}
+  if (strcmp("-snapscreen", argv[i]) == 0){doScroll = false;}
+  if (strcmp("-ability", argv[i]) == 0)
+  {
+   if(strcmp(argv[i + 1], "morph") == 0){playerAbility = ABIL_MORPH;}
+   if(strcmp(argv[i + 1], "boost") == 0){playerAbility = ABIL_BOOST;}
+  }
+ }
 
  levl = fopen(argv[1], "r");
  if(levl == NULL)
@@ -326,23 +340,40 @@ int main(int argc, char **argv)
    printf ("So far we have %d static objects.\n", staticcount);
    ch = fgetc(levl);
   }
+  if (ch == 'p')
+  {
+   printf("Char is p. Beginning if statement.\n");
+   fgetc(levl);
+   char arg = fgetc(levl);
+   char line[80];
+   int numbs[4];
+   int charcounter = 0;
+   int numbcounter = 0;
+   while(arg != '\n' && arg != EOF)
+   {
+    printf("Argument is not a new line!\n");
+    if (isdigit(arg)){line[charcounter] = arg; charcounter = charcounter + 1; printf("Argument is a number\n");
+    }else{
+     printf("Argument is not a number. Possibly space, or a semi colon.\n");
+     charcounter = 0;
+     numbs[numbcounter] = atoi(line);
+     numbcounter = numbcounter + 1;
+     for(int i = 0; i < 80; i++){line[i] = 0;}
+    }
+    arg = fgetc(levl);
+   }
+   printf("Wrapping stuff up, time to add a player.\n");
+   players[playerCount] = newBody(numbs[0], numbs[1], numbs[2], numbs[3], true, 8, 4, true, playerAbility);
+   playerCount++;
+
+   ch = fgetc(levl);
+  }
+
  }
  fclose(levl);
 
- int charAbility = ABIL_NONE;
 
- for(int i = 2; i < argc; i++)
- {
-  if (strcmp("-res", argv[i]) == 0){printf("Hey it works!\n"); SCREEN_W = atoi(argv[i+1]); SCREEN_H = atoi(argv[i+2]);}
-  if (strcmp("-snapscreen", argv[i]) == 0){doScroll = false;}
-  if (strcmp("-ability", argv[i]) == 0)
-  {
-   if(strcmp(argv[i + 1], "morph") == 0){playerAbility = ABIL_MORPH;}
-   if(strcmp(argv[i + 1], "boost") == 0){playerAbility = ABIL_BOOST;}
-  }
- }
 
- body player = newBody(210, 40, 15, 15, true, 8, 4, true, playerAbility);
 
  if(!al_init())
  {
@@ -406,21 +437,26 @@ int main(int argc, char **argv)
 
   if(ev.type == ALLEGRO_EVENT_TIMER)
   {
-   player = updateBody(player, statics, staticcount, key);
-   if (doScroll)
+   for(int i = 0; i < playerCount; i++)
    {
-    if(player.x > SCREEN_W + xscreen - scrollBoundaries && player.xvel > 0){xscreen = xscreen + player.xvel;}
-    if(player.x < xscreen + scrollBoundaries && player.xvel < 0){xscreen = xscreen + player.xvel;}
-    if(player.y > SCREEN_H + yscreen - scrollBoundaries && player.yvel > 0){yscreen = yscreen + player.yvel;}
-    if(player.y < yscreen + scrollBoundaries && player.yvel <= 0){yscreen = yscreen + player.yvel;}
+    players[i] = updateBody(players[i], statics, staticcount, key);
+   }
+
+   if (doScroll) //this pertains to players but isn't in the for loop
+   {//because we don't want to make the screen scroll for every player, just the first one.
+    if(players[0].x > SCREEN_W + xscreen - scrollBoundaries && players[0].xvel > 0){xscreen = xscreen + players[0].xvel;}
+    if(players[0].x < xscreen + scrollBoundaries && players[0].xvel < 0){xscreen = xscreen + players[0].xvel;}
+    if(players[0].y > SCREEN_H + yscreen - scrollBoundaries && players[0].yvel > 0){yscreen = yscreen + players[0].yvel;}
+    if(players[0].y < yscreen + scrollBoundaries && players[0].yvel <= 0){yscreen = yscreen + players[0].yvel;}
    }else{
     //screen switching for x
-    if(player.x > SCREEN_W*(xscreen+1)){xscreen = xscreen + 1;}
-    else if (player.x < SCREEN_W * xscreen){xscreen = xscreen - 1;}
+    if(players[0].x > SCREEN_W*(xscreen+1)){xscreen = xscreen + 1;}
+    else if (players[0].x < SCREEN_W * xscreen){xscreen = xscreen - 1;}
     //screen switching for y
-    if(player.y > SCREEN_H*(yscreen+1)){yscreen = yscreen + 1;}
-    else if (player.y < SCREEN_H * yscreen){yscreen = yscreen - 1;}
+    if(players[0].y > SCREEN_H*(yscreen+1)){yscreen = yscreen + 1;}
+    else if (players[0].y < SCREEN_H * yscreen){yscreen = yscreen - 1;}
    }
+
    redraw = true;
   }
   else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
@@ -488,13 +524,8 @@ int main(int argc, char **argv)
 
    al_clear_to_color(al_map_rgb(0, 255, 255));
 
-   drawBody(player);
-   int i;
-   for(i = 0; i<staticcount; i++)
-   {
-    body g = statics[i];
-    drawBody(g);
-   }
+   for (int i = 0; i < playerCount; i++){drawBody(players[i]);}
+   for(int i = 0; i<staticcount; i++){drawBody(statics[i]);} //draw everything
 
    al_flip_display();
   }
