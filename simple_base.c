@@ -23,8 +23,11 @@ enum MYDIR{DIR_LEFT, DIR_RIGHT};
 
 enum ABIL{ABIL_NONE, ABIL_TELE, ABIL_BOOST, ABIL_MORPH};
 
+enum TYPE{TYPE_STATIC, TYPE_PASSIVE, TYPE_BODY, TYPE_PLAYER, TYPE_CHECKPOINT};
+
 typedef struct body
 {
+ int type;
  int x;
  int y;
  int width;
@@ -37,10 +40,10 @@ typedef struct body
  int normSpeed; //used for remembering how fast something goes normally
  int direction;
  int jumppower;
- bool isControlled;
- bool isActive;
  bool canJump;
  int ability;
+ int spawnX;
+ int spawnY;
 } body;
 
 body newBody(int x, int y, int width, int height, bool isControlled, int jumpheight, int speed, bool active, int ability)
@@ -48,6 +51,7 @@ body newBody(int x, int y, int width, int height, bool isControlled, int jumphei
  body f;
  f.x = x;
  f.y = y;
+ if (isControlled){f.type = TYPE_PLAYER;}else if(active){f.type = TYPE_BODY;}else{f.type = TYPE_STATIC;}
  f.width = width;
  f.height = height;
  f.wide = width;
@@ -58,10 +62,10 @@ body newBody(int x, int y, int width, int height, bool isControlled, int jumphei
  f.normSpeed = speed;
  f.direction = DIR_LEFT;
  f.jumppower = jumpheight;
- f.isControlled = isControlled;
- f.isActive = active;
  f.canJump = false;
  f.ability = ability;
+ f.spawnX = x;
+ f.spawnY = y;
  return f;
 }
 
@@ -72,6 +76,7 @@ body newStatic(int x1, int y1, int x2, int y2)
  s.height = (y2 - y1)/2;
  s.x = x1 + s.width ;
  s.y = y1 + s.height;
+ s.type = TYPE_STATIC;
  s.wide = s.width;
  s.high = s.height;
  s.xvel = 0;
@@ -80,13 +85,35 @@ body newStatic(int x1, int y1, int x2, int y2)
  s.normSpeed = 0;
  s.direction = DIR_RIGHT;
  s.jumppower = 0;
- s.isControlled = false;
- s.isActive = false;
  s.canJump = false;
  s.ability = ABIL_NONE;
+ s.spawnX = s.x;
+ s.spawnY = s.y;
  return s;
 }
 
+body newCheckpoint(int x, int y)
+{
+ body c;
+ c.x = x;
+ c.y = y;
+ c.type = TYPE_CHECKPOINT;
+ c.width = 35;
+ c.height = 35;
+ c.wide = 35;
+ c.high = 35;
+ c.xvel = 0;
+ c.yvel = 0;
+ c.speed = 0;
+ c.normSpeed = 0;
+ c.direction = DIR_RIGHT;
+ c.jumppower = 0;
+ c.canJump = false;
+ c.ability = ABIL_NONE;
+ c.spawnX = x;
+ c.spawnY = y;
+ return c;
+}
 body collide(body a, body b)
 {
  //Let's take this one axis at a time . . .
@@ -98,6 +125,14 @@ puts("Starting new Collidenew function!");
 
  bool xmove;
  bool ymove; //If we are to collide in one axis but not the other, don't mess with the other's movement.
+
+ //The object type might not collide with stuff.
+ //Let's make sure we're actually colliding 2 solid objects.
+ if (b.type != TYPE_BODY && b.type != TYPE_STATIC)
+ {
+  if(b.type == TYPE_CHECKPOINT && abs(a.x - b.x) < 35 && abs(a.y - b.y) < 35){a.spawnX = b.x; a.spawnY = b.y;}
+  return a;//Now we won't continue on with the normal collision, because this object doesn't collide with anything.
+ }
 
  //Now to figure out the deal with x/ycoll/ocup
  //X first
@@ -122,7 +157,6 @@ puts("Starting new Collidenew function!");
  //Now to figure out if we even need to worry about the axises
  if(a.x + a.width + a.xvel < b.x - b.width || a.x - a.width + a.xvel > b.x + b.width){xmove = true; puts("No collide in X axis at all, skipping checks");}else{puts("Objects will collide in X"); xmove = false;}
  if(a.y + a.height + a.yvel < b.y - b.height || a.y - a.height + a.yvel > b.y + b.height){ymove = true; if(a.yvel != 0){a.canJump = false;} puts("No collide in y axis at all, skipping checks");}else{ymove = false; if(xocup && a.yvel >= 1){a.canJump = true;} puts("Player can jump, will collide in Y . . . ");}
-
  if(a.y + a.height + signOf(a.yvel) < b.y - b.height || a.y - a.height + signOf(a.yvel) > b.y + b.height)
  {
   ycoll = false;
@@ -158,8 +192,8 @@ puts("Starting new Collidenew function!");
 body updateBody(body b, body statics[], int staticcount, bool key[])
 {
  puts("Updating a body!");
- if (!b.isActive){return b;}
- if (b.isControlled)
+ if (b.type == TYPE_STATIC || b.type == TYPE_CHECKPOINT || b.type == TYPE_PASSIVE){return b;}
+ if (b.type == TYPE_PLAYER)
  {
   if(key[KEY_UP] && b.canJump)
   {
@@ -200,6 +234,14 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
   if (key[KEY_SPACE] && b.ability != ABIL_NONE && b.ability != ABIL_MORPH)
   {
    if(b.ability == ABIL_BOOST){b.speed = b.normSpeed * 2;}
+  }else if (key[KEY_SPACE])
+  {
+   b.x = b.spawnX;
+   b.y = b.spawnY;
+   b.xvel = 0;
+   b.yvel = 0;
+   xscreen = b.x - SCREEN_W/2;
+   yscreen = b.y - SCREEN_H/2;
   }else{b.speed = b.normSpeed;}
  }
  if(gravdelay == GRAVTICK)
@@ -249,15 +291,22 @@ void drawBody(body b)
   and draw everything back SCREEN_W(H) pixles, times x(y)screen.
   If it's 0, the player is on the first part of the level, if it's 1, they've gone right (or down) one screen, etc.*/
  }
- if (!b.isActive)
+ if (b.type == TYPE_STATIC)
  {
   al_draw_filled_rectangle(sideLeft, sideTop, sideRight, sideBottom, al_map_rgb(255, 0, 0));
  }
- else
+ else if (b.type == TYPE_BODY || b.type == TYPE_PLAYER)
  {
   al_draw_rectangle(sideLeft, sideTop, sideRight, sideBottom, al_map_rgb(255, 0, 0), 0);
  }
- if(b.isControlled)
+ else if(b.type == TYPE_CHECKPOINT)
+ {
+  //draw an X that is 7 pixels wide and high (one in the middle, some others on the sides)
+  al_draw_line(centx - 35, centy - 35, centx + 35, centy + 35, al_map_rgb(255, 0, 0), 1);
+  al_draw_line(centx - 35, centy + 35, centx + 35, centy - 35, al_map_rgb(255, 0, 0), 1);
+
+ }
+ if(b.type = TYPE_PLAYER)
  { //Draw a dot in the center of player objects
   al_draw_rectangle(centx, centy, centx + 1, centy + 1, al_map_rgb(255, 0, 0), 0);
  }
@@ -368,7 +417,34 @@ int main(int argc, char **argv)
 
    ch = fgetc(levl);
   }
+  if (ch == 'c')
+  {
+   printf("Char is c. Beginning if statement.\n");
+   fgetc(levl);
+   char arg = fgetc(levl);
+   char line[80];
+   int numbs[2];
+   int charcounter = 0;
+   int numbcounter = 0;
+   while(arg != '\n' && arg != EOF)
+   {
+    printf("Argument is not a new line!\n");
+    if (isdigit(arg)){line[charcounter] = arg; charcounter = charcounter + 1; printf("Argument is a number\n");
+    }else{
+     printf("Argument is not a number. Possibly space, or a semi colon.\n");
+     charcounter = 0;
+     numbs[numbcounter] = atoi(line);
+     numbcounter = numbcounter + 1;
+     for(int i = 0; i < 80; i++){line[i] = 0;}
+    }
+    arg = fgetc(levl);
+   }
+   printf("Wrapping stuff up, time to add a checkpoint.\n");
+   statics[staticcount] = newCheckpoint(numbs[0], numbs[1]);
+   staticcount++;
 
+   ch = fgetc(levl);
+  }
  }
  fclose(levl);
 
