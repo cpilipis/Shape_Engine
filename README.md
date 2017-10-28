@@ -11,6 +11,7 @@ Built mainly so I could practice my C, it can be used to make the simplest of pl
 * Uses Arrow Keys for input
 * Runs at 60 Frames Per Second
 * Is small in size
+* Currently, platforms, the playerspawn, and checkpoints can be placed inside a map.
 
 ## Dependencies
 All you need to compile this is Allegro 5, and all it's dependencies. If you're on Linux, you should install pkg-config if you don't already have it. Go to [the website](liballeg.org) for Allegro for information on how to install it other than what I can provide here. On Debian I was able to install it through the package manager on the terminal, although I don't know about other distributions. On Mac, I had to instal Brew and then get it from there, although if you like Headaches you can probably install Allegro 5 without Brew and just get it and all it's dependencies from scratch. On windows, you're on your own.
@@ -28,5 +29,5 @@ This repository comes with an example level that you can fire up right after com
 * Add more features to the text leveling system so that the text file can spawn entities, specify which level to go to next,  place spikes, etc.
 * Oh, and entities don't exist yet, so it would be cool to make a little framework.
 * Write a separate program to make the building of levels easier. One will just click and drag to make squares and can then save it, or use little dialogs to automate some stuff (creating the ground faster, putting a square at a nice exact coordinate, etc).
-* Network the game so that multiple players can explore a level together
+* Network the game so that multiple players can explore a level together, or at least so that a player can grab a level file from a server, edit it, and reupload it.
 * Write some programs to randomly generate levels in Python
