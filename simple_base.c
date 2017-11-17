@@ -23,7 +23,7 @@ enum MYDIR{DIR_LEFT, DIR_RIGHT};
 
 enum ABIL{ABIL_NONE, ABIL_TELE, ABIL_BOOST, ABIL_MORPH};
 
-enum TYPE{TYPE_STATIC, TYPE_PASSIVE, TYPE_BODY, TYPE_PLAYER, TYPE_CHECKPOINT};
+enum TYPE{TYPE_STATIC, TYPE_PASSIVE, TYPE_BODY, TYPE_PLAYER, TYPE_CHECKPOINT, TYPE_CORPSE, TYPE_HURT, TYPE_SPIKE};
 
 typedef struct body
 {
@@ -45,6 +45,7 @@ typedef struct body
  int spawnX;
  int spawnY;
 } body;
+
 
 body newBody(int x, int y, int width, int height, bool isControlled, int jumpheight, int speed, bool active, int ability)
 {
@@ -114,6 +115,30 @@ body newCheckpoint(int x, int y)
  c.spawnY = y;
  return c;
 }
+
+body newHurt(int x1, int y1, int x2, int y2)
+{
+ body s;
+ s.width = (x2 - x1)/2;
+ s.height = (y2 - y1)/2;
+ s.x = x1 + s.width ;
+ s.y = y1 + s.height;
+ s.type = TYPE_HURT;
+ s.wide = s.width;
+ s.high = s.height;
+ s.xvel = 0;
+ s.yvel = 0;
+ s.speed = 0;
+ s.normSpeed = 0;
+ s.direction = DIR_RIGHT;
+ s.jumppower = 0;
+ s.canJump = false;
+ s.ability = ABIL_NONE;
+ s.spawnX = s.x;
+ s.spawnY = s.y;
+ return s;
+}
+
 body collide(body a, body b)
 {
  //Let's take this one axis at a time . . .
@@ -128,10 +153,19 @@ puts("Starting new Collidenew function!");
 
  //The object type might not collide with stuff.
  //Let's make sure we're actually colliding 2 solid objects.
- if (b.type != TYPE_BODY && b.type != TYPE_STATIC)
+ if (b.type != TYPE_BODY && b.type != TYPE_STATIC && b.type != TYPE_PLAYER)//case for if the second object isn't solid
  {
-  if(b.type == TYPE_CHECKPOINT && abs(a.x - b.x) < 35 && abs(a.y - b.y) < 35){a.spawnX = b.x; a.spawnY = b.y;}
+  if (abs(a.x - b.x) < b.width && abs(a.y - b.y) < b.height)
+  {
+   if (b.type == TYPE_CHECKPOINT){a.spawnX = b.x; a.spawnY = b.y;}
+   if (b.type == TYPE_HURT || b.type == TYPE_SPIKE){a.type = TYPE_CORPSE;}
+  }
   return a;//Now we won't continue on with the normal collision, because this object doesn't collide with anything.
+ }
+
+ if (a.type != TYPE_BODY && a.type != TYPE_STATIC && a.type != TYPE_PLAYER)//case for if the first object is not solid
+ {
+  return a;
  }
 
  //Now to figure out the deal with x/ycoll/ocup
@@ -193,6 +227,19 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
 {
  puts("Updating a body!");
  if (b.type == TYPE_STATIC || b.type == TYPE_CHECKPOINT || b.type == TYPE_PASSIVE){return b;}
+ if (b.type == TYPE_CORPSE)
+ {
+  if (key[KEY_DOWN])
+  {
+   b.type = TYPE_PLAYER;
+   b.x = b.spawnX;
+   b.y = b.spawnY;
+   b.xvel = 0;
+   b.yvel = 0;
+   xscreen = b.x - SCREEN_W/2;
+   yscreen = b.y - SCREEN_H/2;
+  }
+ }
  if (b.type == TYPE_PLAYER)
  {
   if(key[KEY_UP] && b.canJump)
@@ -236,12 +283,7 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
    if(b.ability == ABIL_BOOST){b.speed = b.normSpeed * 2;}
   }else if (key[KEY_SPACE])
   {
-   b.x = b.spawnX;
-   b.y = b.spawnY;
-   b.xvel = 0;
-   b.yvel = 0;
-   xscreen = b.x - SCREEN_W/2;
-   yscreen = b.y - SCREEN_H/2;
+   b.type = TYPE_CORPSE;
   }else{b.speed = b.normSpeed;}
  }
  if(gravdelay == GRAVTICK)
@@ -291,7 +333,7 @@ void drawBody(body b)
   and draw everything back SCREEN_W(H) pixles, times x(y)screen.
   If it's 0, the player is on the first part of the level, if it's 1, they've gone right (or down) one screen, etc.*/
  }
- if (b.type == TYPE_STATIC)
+ if (b.type == TYPE_STATIC || b.type == TYPE_CORPSE)
  {
   al_draw_filled_rectangle(sideLeft, sideTop, sideRight, sideBottom, al_map_rgb(255, 0, 0));
  }
@@ -306,11 +348,68 @@ void drawBody(body b)
   al_draw_line(centx - 35, centy + 35, centx + 35, centy - 35, al_map_rgb(255, 0, 0), 1);
 
  }
- if(b.type = TYPE_PLAYER)
+ if(b.type == TYPE_PLAYER)
  { //Draw a dot in the center of player objects
   al_draw_rectangle(centx, centy, centx + 1, centy + 1, al_map_rgb(255, 0, 0), 0);
  }
+ if(b.type == TYPE_CORPSE)
+ {
+  //draw some text telling the player that they can push up to respawn
+ }
 }
+
+body spoutStatic(FILE *inlevl, int argNumber, int typeOfThing)
+{
+ fgetc(inlevl);
+ char arg = fgetc(inlevl);
+ char line[80];
+ int numbs[argNumber];
+ int charcounter = 0;
+ int numbcounter = 0;
+ bool negate = false;
+ while(arg != '\n' && arg != EOF)
+ {
+  printf("Argument is not a new line!\n");
+  if (isdigit(arg))
+  {
+   line[charcounter] = arg; charcounter = charcounter + 1; printf("Argument is a number\n");
+  }
+  else if (arg == '-')
+  {
+   printf("Looks like a negative number!\n");
+   negate = true;
+  }
+  else
+  {
+   printf("Argument is not a number. Possibly space, or a semi colon.\n");
+   charcounter = 0;
+   numbs[numbcounter] = atoi(line);
+   if (negate){numbs[numbcounter] = -numbs[numbcounter]; negate = false;}
+   numbcounter = numbcounter + 1;
+   for(int i = 0; i < 80; i++){line[i] = 0;}
+  }
+  arg = fgetc(inlevl);
+ }
+ body thisNewBody;
+ if (typeOfThing == TYPE_CHECKPOINT)
+ {
+  thisNewBody = newCheckpoint(numbs[0], numbs[1]);
+ }
+ else if(typeOfThing == TYPE_PLAYER)
+ {
+  thisNewBody = newBody(numbs[0], numbs[1], numbs[2], numbs[3], true, 8, 4, true, ABIL_NONE);
+ }
+ else if(typeOfThing == TYPE_HURT)
+ {
+  thisNewBody = newHurt(numbs[0], numbs[1], numbs[2], numbs[3]);
+ }
+ else
+ {
+  thisNewBody = newStatic(numbs[0], numbs[1], numbs[2], numbs[3]);
+ }
+ return thisNewBody;
+}
+
 
 int main(int argc, char **argv)
 {
@@ -348,7 +447,7 @@ int main(int argc, char **argv)
   exit (0);
  }
  ch = fgetc(levl);
- int staticLimit = 30;//Don't store more statics than this variable allows for
+ int staticLimit = 50;//Don't store more statics than this variable allows for
  body statics[staticLimit]; //TODO: IMPLEMENT A SYSTEM THAT COUNTS THE STATIC OBJECTS IN A FILE
 //RATHER THAN GIVE THE STATICS VARIABLE AN ARBITARY LIMIT
 //HOW I WAS ABLE TO STORE 14 STATIC OBJECTS IN A TABLE THAT ONLY HAD ROOM FOR 10 IS BEYOND ME
@@ -358,91 +457,33 @@ int main(int argc, char **argv)
  while (ch != EOF)
  {
   printf("Char is not EOF!\n");
+  while(ch == ' ' || ch == '\n' || ch == ';'){ch = fgetc(levl); printf("Looks like we've got some dead space, or a stray semicolon.\n");}
   if (ch == 's')
   {
-   printf("Char is s. Beginning if statement.\n");
-   fgetc(levl);
-   char arg = fgetc(levl);
-   char line[80];
-   int numbs[4];
-   int charcounter = 0;
-   int numbcounter = 0;
-   while(arg != '\n' && arg != EOF)
-   {
-    printf("Argument is not a new line!\n");
-    if (isdigit(arg)){line[charcounter] = arg; charcounter = charcounter + 1; printf("Argument is a number\n");
-    }else{
-     printf("Argument is not a number. Possibly space, or a semi colon.\n");
-     charcounter = 0;
-     numbs[numbcounter] = atoi(line);
-     numbcounter = numbcounter + 1;
-     for(int i = 0; i < 80; i++){line[i] = 0;}
-    }
-    arg = fgetc(levl);
-   }
-   printf("Wrapping stuff up, time to add a static body.\n");
-   //if (staticcount <= 10)
-   //{
-   statics[staticcount] = newStatic(numbs[0], numbs[1], numbs[2], numbs[3]);
+   printf("Let's add a static object.\n");
+   statics[staticcount] = spoutStatic(levl, 4, TYPE_STATIC);
    staticcount++;
-   //}else{printf("The game cannot currently store more than 10 statics. Sorry.\n");}
-   printf ("So far we have %d static objects.\n", staticcount);
    ch = fgetc(levl);
   }
   if (ch == 'p')
   {
-   printf("Char is p. Beginning if statement.\n");
-   fgetc(levl);
-   char arg = fgetc(levl);
-   char line[80];
-   int numbs[4];
-   int charcounter = 0;
-   int numbcounter = 0;
-   while(arg != '\n' && arg != EOF)
-   {
-    printf("Argument is not a new line!\n");
-    if (isdigit(arg)){line[charcounter] = arg; charcounter = charcounter + 1; printf("Argument is a number\n");
-    }else{
-     printf("Argument is not a number. Possibly space, or a semi colon.\n");
-     charcounter = 0;
-     numbs[numbcounter] = atoi(line);
-     numbcounter = numbcounter + 1;
-     for(int i = 0; i < 80; i++){line[i] = 0;}
-    }
-    arg = fgetc(levl);
-   }
-   printf("Wrapping stuff up, time to add a player.\n");
-   players[playerCount] = newBody(numbs[0], numbs[1], numbs[2], numbs[3], true, 8, 4, true, playerAbility);
+   printf("Let's add a player.\n");
+   players[playerCount] = spoutStatic(levl, 4, TYPE_PLAYER);
    playerCount++;
-
    ch = fgetc(levl);
   }
   if (ch == 'c')
   {
-   printf("Char is c. Beginning if statement.\n");
-   fgetc(levl);
-   char arg = fgetc(levl);
-   char line[80];
-   int numbs[2];
-   int charcounter = 0;
-   int numbcounter = 0;
-   while(arg != '\n' && arg != EOF)
-   {
-    printf("Argument is not a new line!\n");
-    if (isdigit(arg)){line[charcounter] = arg; charcounter = charcounter + 1; printf("Argument is a number\n");
-    }else{
-     printf("Argument is not a number. Possibly space, or a semi colon.\n");
-     charcounter = 0;
-     numbs[numbcounter] = atoi(line);
-     numbcounter = numbcounter + 1;
-     for(int i = 0; i < 80; i++){line[i] = 0;}
-    }
-    arg = fgetc(levl);
-   }
-   printf("Wrapping stuff up, time to add a checkpoint.\n");
-   statics[staticcount] = newCheckpoint(numbs[0], numbs[1]);
+   printf("Let's add a checkpoint.\n");
+   statics[staticcount] = spoutStatic(levl, 2, TYPE_CHECKPOINT);
    staticcount++;
-
+   ch = fgetc(levl);
+  }
+  if (ch == 'h')
+  {
+   printf("Let's add a hurt trigger.\n");
+   statics[staticcount] = spoutStatic(levl, 4, TYPE_HURT);
+   staticcount++;
    ch = fgetc(levl);
   }
  }
