@@ -359,27 +359,11 @@ void drawBody(body b)
  {
   int spikeEveners[25];
   printf("Let's draw some spikes!\n");
-  for(int spikeLoop = 0; spikeLoop <= 50; spikeLoop = spikeLoop + 2)
-  {
-   printf("We are in step %d of the loop responsible for getting modulus of the body!\n", spikeLoop);
-   if(spikeLoop == 0){continue;}
-   spikeEveners[spikeLoop/2] = (b.width * 2) % spikeLoop;
-  }
-  int mod = 99;
-  int widthOfSpike;
-  printf("We are out of the first loop! On to the second one!\n");
-  for (int spikeLoop = 0; spikeLoop < 25; spikeLoop++)
-  {
-   printf("We are in step %d of the loop responsible for getting the smallest modulus!\n", spikeLoop);
-   if(spikeEveners[spikeLoop] <= mod)
-   {
-    printf("We found a smaller mod! Let's set the divisor to %d.\n", ((spikeLoop + 1) * 2));
-    mod = spikeEveners[spikeLoop];
-    widthOfSpike = ((spikeLoop + 1) * 2);
-   }
-  }
+  int widthOfSpike = 15;
   int numberOfSpikes = (b.width*2)/widthOfSpike;
-  if (b.width * 2 <= 10)
+  printf("Width of spike is %d and number of spikes is %d.\n", widthOfSpike, numberOfSpikes);
+
+  if (b.width * 2 <= widthOfSpike)
   {
    al_draw_line(sideLeft, sideBottom, sideLeft + widthOfSpike/2, sideTop, al_map_rgb(255, 0, 0), 0);
    al_draw_line(sideLeft + widthOfSpike/2, sideTop, sideRight, sideBottom, al_map_rgb(255, 0, 0), 0);
