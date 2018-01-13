@@ -19,6 +19,11 @@ On mac, you'll want to add a `-lallegro_main` in there. I don't know about any c
 You can add the -res argument for changing the resolution from 640X480 to something else. For example:
 `./Shape example_level.txt -res 1920 1080`
 
+The controls are as follows:
+- Arrow keys to move
+- Push space to trigger your own death
+- If you died, your player will turn a solid red. Push the down arrow key to respawn
+
 ### Stuff I may want to do
 
 - Implement visible spikes/hazards that actually l for the player to avoid other than pits
