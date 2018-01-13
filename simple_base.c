@@ -23,7 +23,7 @@ enum MYDIR{DIR_LEFT, DIR_RIGHT};
 
 enum ABIL{ABIL_NONE, ABIL_TELE, ABIL_BOOST, ABIL_MORPH};
 
-enum TYPE{TYPE_STATIC, TYPE_PASSIVE, TYPE_BODY, TYPE_PLAYER, TYPE_CHECKPOINT, TYPE_CORPSE, TYPE_HURT, TYPE_SPIKE};
+enum TYPE{TYPE_STATIC, TYPE_PASSIVE, TYPE_BODY, TYPE_PLAYER, TYPE_CHECKPOINT, TYPE_CORPSE, TYPE_HURT, TYPE_HURT_VIS};
 
 typedef struct body
 {
@@ -116,14 +116,14 @@ body newCheckpoint(int x, int y)
  return c;
 }
 
-body newHurt(int x1, int y1, int x2, int y2)
+body newHurt(int x1, int y1, int x2, int y2, bool vis)
 {
  body s;
  s.width = (x2 - x1)/2;
  s.height = (y2 - y1)/2;
  s.x = x1 + s.width ;
  s.y = y1 + s.height;
- s.type = TYPE_HURT;
+ if (vis){s.type = TYPE_HURT_VIS;}else{s.type = TYPE_HURT;}
  s.wide = s.width;
  s.high = s.height;
  s.xvel = 0;
@@ -153,17 +153,17 @@ puts("Starting new Collidenew function!");
 
  //The object type might not collide with stuff.
  //Let's make sure we're actually colliding 2 solid objects.
- if (b.type != TYPE_BODY && b.type != TYPE_STATIC && b.type != TYPE_PLAYER)//case for if the second object isn't solid
+ if (b.type != TYPE_BODY && b.type != TYPE_STATIC && b.type != TYPE_PLAYER && b.type != TYPE_CORPSE)//case for if the second object isn't solid
  {
-  if (abs(a.x - b.x) < b.width && abs(a.y - b.y) < b.height)
+  if (abs(a.x - b.x) < b.width + a.width && abs(a.y - b.y) < b.height + a.height)
   {
    if (b.type == TYPE_CHECKPOINT){a.spawnX = b.x; a.spawnY = b.y;}
-   if (b.type == TYPE_HURT || b.type == TYPE_SPIKE){a.type = TYPE_CORPSE;}
+   if ((b.type == TYPE_HURT || b.type == TYPE_HURT_VIS)){a.type = TYPE_CORPSE; a.yvel = -4;} //This is the easiest way to kill the player instantly
   }
   return a;//Now we won't continue on with the normal collision, because this object doesn't collide with anything.
  }
 
- if (a.type != TYPE_BODY && a.type != TYPE_STATIC && a.type != TYPE_PLAYER)//case for if the first object is not solid
+ if (a.type != TYPE_BODY && a.type != TYPE_STATIC && a.type != TYPE_PLAYER && a.type != TYPE_CORPSE)//case for if the first object is not solid
  {
   return a;
  }
@@ -256,7 +256,8 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
 
   if(key[KEY_LEFT])
   {
-   b.xvel = -b.speed;
+   if (b.canJump){b.xvel = -b.speed;}
+   else if(abs(b.xvel) <= 4){b.xvel = b.xvel - 1;}
    if (b.width == b.wide && b.ability == ABIL_MORPH){b.x = b.x - b.wide/2;}
    if(b.ability == ABIL_MORPH){b.width = b.wide/2;}
    b.direction = DIR_LEFT;
@@ -264,7 +265,8 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
   }
   else if(key[KEY_RIGHT])
   {
-   b.xvel = b.speed;
+   if(b.canJump){b.xvel = b.speed;}
+   else if(abs(b.xvel) <= 4){b.xvel = b.xvel + 1;}
    if (b.width == b.wide && b.ability == ABIL_MORPH){b.x = b.x + b.wide/2;}
    if (b.ability == ABIL_MORPH){b.width = b.wide/2;}
    b.direction = DIR_RIGHT;
@@ -291,6 +293,7 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
   puts ("Doing a gravity!");
   gravdelay = 0;
   b.yvel = b.yvel + GRAVITY;
+  if (b.type == TYPE_CORPSE && b.canJump){b.xvel = b.xvel - signOf(b.xvel);}
   printf("%d\n", b.yvel);
  }else{gravdelay++;}
 
@@ -352,6 +355,50 @@ void drawBody(body b)
  { //Draw a dot in the center of player objects
   al_draw_rectangle(centx, centy, centx + 1, centy + 1, al_map_rgb(255, 0, 0), 0);
  }
+ if (b.type == TYPE_HURT_VIS)
+ {
+  int spikeEveners[25];
+  printf("Let's draw some spikes!\n");
+  for(int spikeLoop = 0; spikeLoop <= 50; spikeLoop = spikeLoop + 2)
+  {
+   printf("We are in step %d of the loop responsible for getting modulus of the body!\n", spikeLoop);
+   if(spikeLoop == 0){continue;}
+   spikeEveners[spikeLoop/2] = (b.width * 2) % spikeLoop;
+  }
+  int mod = 99;
+  int widthOfSpike;
+  printf("We are out of the first loop! On to the second one!\n");
+  for (int spikeLoop = 0; spikeLoop < 25; spikeLoop++)
+  {
+   printf("We are in step %d of the loop responsible for getting the smallest modulus!\n", spikeLoop);
+   if(spikeEveners[spikeLoop] <= mod)
+   {
+    printf("We found a smaller mod! Let's set the divisor to %d.\n", ((spikeLoop + 1) * 2));
+    mod = spikeEveners[spikeLoop];
+    widthOfSpike = ((spikeLoop + 1) * 2);
+   }
+  }
+  int numberOfSpikes = (b.width*2)/widthOfSpike;
+  if (b.width * 2 <= 10)
+  {
+   al_draw_line(sideLeft, sideBottom, sideLeft + widthOfSpike/2, sideTop, al_map_rgb(255, 0, 0), 0);
+   al_draw_line(sideLeft + widthOfSpike/2, sideTop, sideRight, sideBottom, al_map_rgb(255, 0, 0), 0);
+  }
+  for (int spikeCount = 0; spikeCount < numberOfSpikes; spikeCount++)
+  {
+   int nextSpikeX = sideLeft + spikeCount * widthOfSpike;
+   al_draw_line(nextSpikeX, sideBottom, nextSpikeX + widthOfSpike/2, sideTop, al_map_rgb(255, 0, 0), 0);
+   al_draw_line(nextSpikeX + widthOfSpike/2, sideTop, nextSpikeX + widthOfSpike, sideBottom, al_map_rgb(255, 0, 0), 0);
+   if (spikeCount == numberOfSpikes - 1)
+   {
+    printf("Looks like we're doing the last spike!\n");
+    int nextSpikeX = sideLeft + spikeCount * widthOfSpike + widthOfSpike;
+    int distToLastX = sideRight - nextSpikeX;
+    al_draw_line(nextSpikeX, sideBottom, nextSpikeX + distToLastX/2, sideTop, al_map_rgb(255, 0, 0), 0);
+    al_draw_line(nextSpikeX + distToLastX/2, sideTop, sideRight, sideBottom, al_map_rgb(255, 0, 0), 0);
+   }
+  }
+ }
  if(b.type == TYPE_CORPSE)
  {
   //draw some text telling the player that they can push up to respawn
@@ -401,7 +448,11 @@ body spoutStatic(FILE *inlevl, int argNumber, int typeOfThing)
  }
  else if(typeOfThing == TYPE_HURT)
  {
-  thisNewBody = newHurt(numbs[0], numbs[1], numbs[2], numbs[3]);
+  thisNewBody = newHurt(numbs[0], numbs[1], numbs[2], numbs[3], false);
+ }
+ else if(typeOfThing == TYPE_HURT_VIS)
+ {
+  thisNewBody = newHurt(numbs[0], numbs[1], numbs[2], numbs[3], true);
  }
  else
  {
@@ -482,7 +533,7 @@ int main(int argc, char **argv)
   if (ch == 'h')
   {
    printf("Let's add a hurt trigger.\n");
-   statics[staticcount] = spoutStatic(levl, 4, TYPE_HURT);
+   statics[staticcount] = spoutStatic(levl, 4, TYPE_HURT_VIS);
    staticcount++;
    ch = fgetc(levl);
   }
@@ -573,7 +624,6 @@ int main(int argc, char **argv)
     if(players[0].y > SCREEN_H*(yscreen+1)){yscreen = yscreen + 1;}
     else if (players[0].y < SCREEN_H * yscreen){yscreen = yscreen - 1;}
    }
-
    redraw = true;
   }
   else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
