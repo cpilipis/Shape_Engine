@@ -26,9 +26,9 @@ The controls are as follows:
 - If you died, your player will turn a solid red. Push the down arrow key to respawn
 
 ### Stuff I may want to do
-
-- Implement visible spikes/hazards for bottomless pits. I have already programmed an invisible type of hurt trigger for bottomless pits, I just want to make it so that you can differentiate between visible and invisible triggers in the level file. They'll not only look different, but also behave a little different, too (the player's corpse currently bounces off of spikes. This is cool for spikes, but not for bottomless pits. Also, the camera shouldn't move with the corpse if it falls down a bottomless pit, so that the player flies off screen and thus the player doesn't see the end of the pit).
-- Write a program to graphically build levels. Editing text files is boring. Maybe something in game would be cool, too. I could have a way to build stuff in game and a seperate "God edit" program for more powerful editing.
+- Implement invisible death triggers. They'll also behave differently from spikes.
 - Write documentation for every argument this game supports on the command line and every identifier used in mapping.
+- Write a program to graphically build levels. Editing text files is boring, and it's hard to predict the results of the level you'll end up with. Maybe something in game would be cool, too. I could have a way to build stuff in game and a seperate "God edit" program for more powerful editing.
+- Implement a Lua interpreter so that the player can implement their own items and platforms.
 - Implement a networked multiplayer mode
 - Write up a random level generator in Python. Maybe one based on the [libraryofbabel.info](http://www.libraryofbabel.info). It would be pretty cool to be able to choose any page in any book off that site and have the level be consistent via the book to level algorithm. Kinda like minecraft seeds for worlds.
