@@ -13,7 +13,7 @@ It's available for Windows, Mac, Linux, IOS, and Android.
 
 ### Compilation
 `gcc simple_base.c -lallegro -lallegro_primitives -oShape`
-On mac, you'll want to add a `-lallegro_main` in there. I don't know about any compilation on windows yet. It's likely possible if you fool around long enough in MinGW. If you figure out how to compile it on Windows.
+On mac, you'll want to add a `-lallegro_main` in there. I don't know about any compilation on windows yet. It's likely possible if you fool around long enough in MinGW. If you figure out how to compile it on Windows and you know your instructions will work for most recent Windows machines (Ideally the method should work for Windows 7 and beyond, although Windows XP support would be kinda cool. Anything older than that might be redundant.), please click the button to edit this file, type them here, and send me a pull request about it.
 
 ### Running it
 `./Shape example_level.txt`
