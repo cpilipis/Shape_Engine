@@ -4,16 +4,17 @@
 #include <allegro5/allegro_primitives.h>
 #include "simplestuff.c" //Why is this in a separate file? It only defines ONE new function! One! And it's a function that C probably comes with in some math library anyways!
 
-const float FPS = 60;
-int SCREEN_W = 640;
+const float FPS = 60; //The framerate is designed to never go above or below 60
+int SCREEN_W = 640; //Screen width and heights by default
 int SCREEN_H = 480;
-const int GRAVITY = 1;
-const int GRAVTICK = 2;
+const int GRAVITY = 1; //How much does gravity accelerate an object?
+const int GRAVTICK = 2; //How often does gravity accelerate an object?
 int xscreen = 0;
-int yscreen = 0;
-bool doScroll = true;
+int yscreen = 0; //Coordinates of the scrolling camera
 int scrollBoundaries = 200;
 int gravdelay = 0;
+int backCols [3] = {0, 0, 0};
+int foreCols [3] = {255, 255, 255};
 
 enum MYKEYS {
  KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_SPACE
@@ -45,6 +46,10 @@ typedef struct body
  int spawnX;
  int spawnY;
 } body;
+
+body *cameraFocusObject; //A pointer of the object the camera should follow
+//By making it a constant, we can make sure the function to follow the object with a camera does not alter it's x and y posiiton
+//but by changing the address the pointer points to, we can switch objects on the fly.
 
 
 body newBody(int x, int y, int width, int height, bool isControlled, int jumpheight, int speed, bool active, int ability)
@@ -238,6 +243,7 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
    b.yvel = 0;
    xscreen = b.x - SCREEN_W/2;
    yscreen = b.y - SCREEN_H/2;
+   cameraFocusObject = &b;
   }
  }
  if (b.type == TYPE_PLAYER)
@@ -286,6 +292,7 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
   }else if (key[KEY_SPACE])
   {
    b.type = TYPE_CORPSE;
+   cameraFocusObject = NULL;
   }else{b.speed = b.normSpeed;}
  }
  if(gravdelay == GRAVTICK)
@@ -311,49 +318,35 @@ void drawBody(body b)
  int sideBottom;
  int centx;
  int centy;
- if(doScroll)
- {
-  sideLeft = b.x - b.width - xscreen;
-  sideRight = b.x + b.width - xscreen;
-  sideTop = b.y - b.height - yscreen;
-  sideBottom = b.y + b.height - yscreen;
-  centx = b.x - xscreen;
-  centy = b.y - yscreen;
+ sideLeft = b.x - b.width - xscreen;
+ sideRight = b.x + b.width - xscreen;
+ sideTop = b.y - b.height - yscreen;
+ sideBottom = b.y + b.height - yscreen;
+ centx = b.x - xscreen;
+ centy = b.y - yscreen;
 
   /*to scroll as the player moves, we simply shift everything by the scroll variables. No more, no less.
   The most complex part is the actual shifting of the scroll variables, in which we make a variable to store the value
   that causes the screen to scroll when the player passes it in either direction. Then, we modify xscreen/yscreen when the
   player passes that point.*/
- }else{
-  sideLeft = b.x - b.width - SCREEN_W * xscreen;
-  sideRight = b.x + b.width - SCREEN_W * xscreen;
-  sideTop = b.y - b.height - SCREEN_H * yscreen;
-  sideBottom = b.y + b.height - SCREEN_H * yscreen;
-  centx = b.x - SCREEN_W * xscreen;
-  centy = b.y - SCREEN_H * yscreen;
-
-  /*To scroll the screen when the player reaches the edge, we change the variable x(y)screen
-  and draw everything back SCREEN_W(H) pixles, times x(y)screen.
-  If it's 0, the player is on the first part of the level, if it's 1, they've gone right (or down) one screen, etc.*/
- }
  if (b.type == TYPE_STATIC || b.type == TYPE_CORPSE)
  {
-  al_draw_filled_rectangle(sideLeft, sideTop, sideRight, sideBottom, al_map_rgb(255, 0, 0));
+  al_draw_filled_rectangle(sideLeft, sideTop, sideRight, sideBottom, al_map_rgb(foreCols[0], foreCols[1], foreCols[2]));
  }
  else if (b.type == TYPE_BODY || b.type == TYPE_PLAYER)
  {
-  al_draw_rectangle(sideLeft, sideTop, sideRight, sideBottom, al_map_rgb(255, 0, 0), 0);
+  al_draw_rectangle(sideLeft, sideTop, sideRight, sideBottom, al_map_rgb(foreCols[0], foreCols[1], foreCols[2]), 0);
  }
  else if(b.type == TYPE_CHECKPOINT)
  {
   //draw an X that is 7 pixels wide and high (one in the middle, some others on the sides)
-  al_draw_line(centx - 35, centy - 35, centx + 35, centy + 35, al_map_rgb(255, 0, 0), 1);
-  al_draw_line(centx - 35, centy + 35, centx + 35, centy - 35, al_map_rgb(255, 0, 0), 1);
+  al_draw_line(centx - 35, centy - 35, centx + 35, centy + 35, al_map_rgb(foreCols[0], foreCols[1], foreCols[2]), 1);
+  al_draw_line(centx - 35, centy + 35, centx + 35, centy - 35, al_map_rgb(foreCols[0], foreCols[1], foreCols[2]), 1);
 
  }
  if(b.type == TYPE_PLAYER)
  { //Draw a dot in the center of player objects
-  al_draw_rectangle(centx, centy, centx + 1, centy + 1, al_map_rgb(255, 0, 0), 0);
+  al_draw_rectangle(centx, centy, centx + 1, centy + 1, al_map_rgb(foreCols[0], foreCols[1], foreCols[2]), 0);
  }
  if (b.type == TYPE_HURT_VIS)
  {
@@ -365,21 +358,21 @@ void drawBody(body b)
 
   if (b.width * 2 <= widthOfSpike)
   {
-   al_draw_line(sideLeft, sideBottom, sideLeft + widthOfSpike/2, sideTop, al_map_rgb(255, 0, 0), 0);
-   al_draw_line(sideLeft + widthOfSpike/2, sideTop, sideRight, sideBottom, al_map_rgb(255, 0, 0), 0);
+   al_draw_line(sideLeft, sideBottom, sideLeft + widthOfSpike/2, sideTop, al_map_rgb(foreCols[0], foreCols[1], foreCols[2]), 0);
+   al_draw_line(sideLeft + widthOfSpike/2, sideTop, sideRight, sideBottom, al_map_rgb(foreCols[0], foreCols[1], foreCols[2]), 0);
   }
   for (int spikeCount = 0; spikeCount < numberOfSpikes; spikeCount++)
   {
    int nextSpikeX = sideLeft + spikeCount * widthOfSpike;
-   al_draw_line(nextSpikeX, sideBottom, nextSpikeX + widthOfSpike/2, sideTop, al_map_rgb(255, 0, 0), 0);
-   al_draw_line(nextSpikeX + widthOfSpike/2, sideTop, nextSpikeX + widthOfSpike, sideBottom, al_map_rgb(255, 0, 0), 0);
+   al_draw_line(nextSpikeX, sideBottom, nextSpikeX + widthOfSpike/2, sideTop, al_map_rgb(foreCols[0], foreCols[1], foreCols[2]), 0);
+   al_draw_line(nextSpikeX + widthOfSpike/2, sideTop, nextSpikeX + widthOfSpike, sideBottom, al_map_rgb(foreCols[0], foreCols[1], foreCols[2]), 0);
    if (spikeCount == numberOfSpikes - 1)
    {
     printf("Looks like we're doing the last spike!\n");
     int nextSpikeX = sideLeft + spikeCount * widthOfSpike + widthOfSpike;
     int distToLastX = sideRight - nextSpikeX;
-    al_draw_line(nextSpikeX, sideBottom, nextSpikeX + distToLastX/2, sideTop, al_map_rgb(255, 0, 0), 0);
-    al_draw_line(nextSpikeX + distToLastX/2, sideTop, sideRight, sideBottom, al_map_rgb(255, 0, 0), 0);
+    al_draw_line(nextSpikeX, sideBottom, nextSpikeX + distToLastX/2, sideTop, al_map_rgb(foreCols[0], foreCols[1], foreCols[2]), 0);
+    al_draw_line(nextSpikeX + distToLastX/2, sideTop, sideRight, sideBottom, al_map_rgb(foreCols[0], foreCols[1], foreCols[2]), 0);
    }
   }
  }
@@ -451,7 +444,7 @@ int main(int argc, char **argv)
  ALLEGRO_DISPLAY *display = NULL;
  ALLEGRO_EVENT_QUEUE *event_queue = NULL;
  ALLEGRO_TIMER *timer = NULL;
- ALLEGRO_COLOR pColor = al_map_rgb(255, 0, 0);
+ ALLEGRO_COLOR pColor = al_map_rgb(foreCols[0], foreCols[1], foreCols[2]);
  int playerAbility = ABIL_NONE;
  bool key[5] = {false, false, false, false, false};
  bool redraw = true;
@@ -467,11 +460,24 @@ int main(int argc, char **argv)
  for(int i = 2; i < argc; i++)
  {
   if (strcmp("-res", argv[i]) == 0){printf("Hey it works!\n"); SCREEN_W = atoi(argv[i+1]); SCREEN_H = atoi(argv[i+2]);}
-  if (strcmp("-snapscreen", argv[i]) == 0){doScroll = false;}
   if (strcmp("-ability", argv[i]) == 0)
   {
    if(strcmp(argv[i + 1], "morph") == 0){playerAbility = ABIL_MORPH;}
    if(strcmp(argv[i + 1], "boost") == 0){playerAbility = ABIL_BOOST;}
+  }
+  if (strcmp(argv[i], "-backgroundColor") == 0)
+  {
+   for (int n = 0; n < 3; n++)
+   {
+    backCols[n] = atoi(argv[i + 1 + n]);
+   }
+  }
+  if (strcmp(argv[i], "-foregroundColor") == 0)
+  {
+   for (int n = 0; n < 3; n++)
+   {
+    foreCols[n] = atoi(argv[i + 1 + n]);
+   }
   }
  }
 
@@ -504,6 +510,7 @@ int main(int argc, char **argv)
   {
    printf("Let's add a player.\n");
    players[playerCount] = spoutStatic(levl, 4, TYPE_PLAYER);
+   cameraFocusObject = &players[playerCount];
    playerCount++;
    ch = fgetc(levl);
   }
@@ -594,19 +601,12 @@ int main(int argc, char **argv)
     players[i] = updateBody(players[i], statics, staticcount, key);
    }
 
-   if (doScroll) //this pertains to players but isn't in the for loop
+   if (cameraFocusObject != NULL) //this pertains to players but isn't in the for loop
    {//because we don't want to make the screen scroll for every player, just the first one.
-    if(players[0].x > SCREEN_W + xscreen - scrollBoundaries && players[0].xvel > 0){xscreen = xscreen + players[0].xvel;}
-    if(players[0].x < xscreen + scrollBoundaries && players[0].xvel < 0){xscreen = xscreen + players[0].xvel;}
-    if(players[0].y > SCREEN_H + yscreen - scrollBoundaries && players[0].yvel > 0){yscreen = yscreen + players[0].yvel;}
-    if(players[0].y < yscreen + scrollBoundaries && players[0].yvel <= 0){yscreen = yscreen + players[0].yvel;}
-   }else{
-    //screen switching for x
-    if(players[0].x > SCREEN_W*(xscreen+1)){xscreen = xscreen + 1;}
-    else if (players[0].x < SCREEN_W * xscreen){xscreen = xscreen - 1;}
-    //screen switching for y
-    if(players[0].y > SCREEN_H*(yscreen+1)){yscreen = yscreen + 1;}
-    else if (players[0].y < SCREEN_H * yscreen){yscreen = yscreen - 1;}
+    if(cameraFocusObject->x > SCREEN_W + xscreen - scrollBoundaries && cameraFocusObject->xvel > 0){xscreen = xscreen + cameraFocusObject->xvel;}
+    if(cameraFocusObject->x < xscreen + scrollBoundaries && cameraFocusObject->xvel < 0){xscreen = xscreen + cameraFocusObject->xvel;}
+    if(cameraFocusObject->y > SCREEN_H + yscreen - scrollBoundaries && cameraFocusObject->yvel > 0){yscreen = yscreen + cameraFocusObject->yvel;}
+    if(cameraFocusObject->y < yscreen + scrollBoundaries && cameraFocusObject->yvel <= 0){yscreen = yscreen + cameraFocusObject->yvel;}
    }
    redraw = true;
   }
@@ -673,7 +673,7 @@ int main(int argc, char **argv)
   {
    redraw = false;
 
-   al_clear_to_color(al_map_rgb(0, 255, 255));
+   al_clear_to_color(al_map_rgb(backCols[0], backCols[1], backCols[2]));
 
    for (int i = 0; i < playerCount; i++){drawBody(players[i]);}
    for(int i = 0; i<staticcount; i++){drawBody(statics[i]);} //draw everything
