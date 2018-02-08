@@ -16,11 +16,14 @@ It's available for Windows, Mac, Linux, IOS, and Android.
 On mac, you'll want to add a `-lallegro_main` in there. I don't know about any compilation on windows yet. It's likely possible if you fool around long enough in MinGW. If you figure out how to compile it on Windows and you know your instructions will work for most recent Windows machines (Ideally the method should work for Windows 7 and beyond, although Windows XP support would be kinda cool. Anything older than that might be redundant.), please click the button to edit this file, type them here, and send me a pull request about it.
 
 ### Running it
+Just run the executable that pops out of the compliler, typically "Shape" if you used the command above. You have to specify a level as the first argument, which is why even the source code of the game also comes with an example level called example_level.txt.
 `./Shape example_level.txt`
 You can add the -res argument for changing the resolution from 640X480 to something else. For example:
 `./Shape example_level.txt -res 1920 1080`
+The game by default runs with a black background and white foreground, but you can change this by specifying the -backgroundColor and -foregroundColor arguments and then providing RGB values for each. For example, This next one sets the background cyan and the foreground red.
+`./Shape example_level.txt -backgroundColor 0 255 255 -foregroundColor 255 0 0`
 
-The controls are as follows:
+The controls for actually playing the game are as follows:
 - Arrow keys to move
 - Push space to trigger your own death
 - If you died, your player will turn a solid red. Push the down arrow key to respawn
