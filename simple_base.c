@@ -456,10 +456,11 @@ int main(int argc, char **argv)
  FILE *levl;
  char ch;
  int charAbility = ABIL_NONE;
-
+ bool trippy = false;
  for(int i = 2; i < argc; i++)
  {
-  if (strcmp("-res", argv[i]) == 0){printf("Hey it works!\n"); SCREEN_W = atoi(argv[i+1]); SCREEN_H = atoi(argv[i+2]);}
+  if (strcmp("-res", argv[i]) == 0){SCREEN_W = atoi(argv[i+1]); SCREEN_H = atoi(argv[i+2]);}
+  if (strcmp("-trippy", argv[i]) == 0){trippy = true;}
   if (strcmp("-ability", argv[i]) == 0)
   {
    if(strcmp(argv[i + 1], "morph") == 0){playerAbility = ABIL_MORPH;}
@@ -588,7 +589,8 @@ int main(int argc, char **argv)
  al_flip_display();
 
  al_start_timer(timer);
-
+ int colorTrip = 1;
+ int colorSkip = 2;
  while(!doexit)
  {
   ALLEGRO_EVENT ev;
@@ -672,7 +674,17 @@ int main(int argc, char **argv)
   if(redraw && al_is_event_queue_empty(event_queue))
   {
    redraw = false;
-
+   if (trippy == true)
+   { //color shifting code
+    for (int f = 1; f <= colorSkip; f++)
+    {
+     for (int a = 0; a < 3; a++){foreCols[a] = foreCols[a] + colorTrip;}
+     if (foreCols[1] + colorTrip > 255 || foreCols[1] + colorTrip < 0){break;}
+    }
+    if (foreCols[1] >= 250){colorTrip = -1;}
+    if (foreCols[1] <= 5){colorTrip = 1;}
+   }
+   
    al_clear_to_color(al_map_rgb(backCols[0], backCols[1], backCols[2]));
 
    for (int i = 0; i < playerCount; i++){drawBody(players[i]);}
@@ -686,6 +698,7 @@ int main(int argc, char **argv)
  al_destroy_display(display);
  al_destroy_event_queue(event_queue);
  al_shutdown_primitives_addon();
-
+ printf("Size of a single body in memory: %d\n", sizeof(body));
+ printf("Size of the statics table in total: %d\n", sizeof(statics));
  return 0;
 }
