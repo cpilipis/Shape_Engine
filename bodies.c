@@ -2,12 +2,6 @@
 #include <stdlib.h>
 #include "simplestuff.c" //Why is this in a separate file? It only defines ONE new function! One! And it's a function that C probably comes with in some math library anyways!
 
-enum MYDIR{DIR_LEFT, DIR_RIGHT};
-
-enum ABIL{ABIL_NONE, ABIL_TELE, ABIL_BOOST, ABIL_MORPH};
-
-enum TYPE{TYPE_STATIC, TYPE_PASSIVE, TYPE_BODY, TYPE_PLAYER, TYPE_CHECKPOINT, TYPE_CORPSE, TYPE_HURT, TYPE_HURT_VIS};
-
 typedef struct body
 {
  int type;
