@@ -53,10 +53,10 @@ void drawBody(body b)
  if (b.type == TYPE_HURT_VIS)
  {
   int spikeEveners[25];
-  printf("Let's draw some spikes!\n");
+  //printf("Let's draw some spikes!\n");
   int widthOfSpike = 15;
   int numberOfSpikes = (b.width*2)/widthOfSpike;
-  printf("Width of spike is %d and number of spikes is %d.\n", widthOfSpike, numberOfSpikes);
+  //printf("Width of spike is %d and number of spikes is %d.\n", widthOfSpike, numberOfSpikes);
 
   if (b.width * 2 <= widthOfSpike)
   {
@@ -70,7 +70,7 @@ void drawBody(body b)
    al_draw_line(nextSpikeX + widthOfSpike/2, sideTop, nextSpikeX + widthOfSpike, sideBottom, al_map_rgb(foreCols[0], foreCols[1], foreCols[2]), 0);
    if (spikeCount == numberOfSpikes - 1)
    {
-    printf("Looks like we're doing the last spike!\n");
+    //printf("Looks like we're doing the last spike!\n");
     int nextSpikeX = sideLeft + spikeCount * widthOfSpike + widthOfSpike;
     int distToLastX = sideRight - nextSpikeX;
     al_draw_line(nextSpikeX, sideBottom, nextSpikeX + distToLastX/2, sideTop, al_map_rgb(foreCols[0], foreCols[1], foreCols[2]), 0);

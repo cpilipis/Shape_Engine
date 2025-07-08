@@ -1,6 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "bodies.h"
+#include "loading.h"
 
 body spoutStatic(FILE *inlevl, int argNumber, int typeOfThing)
 {
@@ -13,19 +11,19 @@ body spoutStatic(FILE *inlevl, int argNumber, int typeOfThing)
  bool negate = false;
  while(arg != '\n' && arg != EOF)
  {
-  printf("Argument is not a new line!\n");
+  //printf("Argument is not a new line!\n");
   if (isdigit(arg))
   {
-   line[charcounter] = arg; charcounter = charcounter + 1; printf("Argument is a number\n");
+   line[charcounter] = arg; charcounter = charcounter + 1; //printf("Argument is a number\n");
   }
   else if (arg == '-')
   {
-   printf("Looks like a negative number!\n");
+   //printf("Looks like a negative number!\n");
    negate = true;
   }
   else
   {
-   printf("Argument is not a number. Possibly space, or a semi colon.\n");
+   //printf("Argument is not a number. Possibly space, or a semi colon.\n");
    charcounter = 0;
    numbs[numbcounter] = atoi(line);
    if (negate){numbs[numbcounter] = -numbs[numbcounter]; negate = false;}

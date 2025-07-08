@@ -3,10 +3,10 @@
 #include <allegro5/allegro.h>
 
 #include "bodies.h"
-#include "drawing.c"
+#include "drawing.h"
 #include "libbodies.h"
 #include "input.h"
-#include "loading.c"
+#include "loading.h"
 
 int main(int argc, char **argv)
 {
@@ -32,8 +32,15 @@ int main(int argc, char **argv)
   if (strcmp("-trippy", argv[i]) == 0){trippy = true;}
   if (strcmp("-ability", argv[i]) == 0)
   {
-   if(strcmp(argv[i + 1], "morph") == 0){playerAbility = ABIL_MORPH;}
-   if(strcmp(argv[i + 1], "boost") == 0){playerAbility = ABIL_BOOST;}
+   if(strcmp(argv[i + 1], "morph") == 0) {
+     playerAbility = ABIL_MORPH;
+     printf("Player gets morph ability!\n");
+   }
+   if(strcmp(argv[i + 1], "boost") == 0) {
+     playerAbility = ABIL_BOOST;
+     printf("Player gets boost ability!\n");
+   }
+   printf("ability value: %d\n", playerAbility);
   }
   if (strcmp(argv[i], "-backgroundColor") == 0)
   {
@@ -67,33 +74,34 @@ int main(int argc, char **argv)
  int staticcount = 0;
  while (ch != EOF)
  {
-  printf("Char is not EOF!\n");
-  while(ch == ' ' || ch == '\n' || ch == ';'){ch = fgetc(levl); printf("Looks like we've got some dead space, or a stray semicolon.\n");}
+  //printf("Char is not EOF!\n");
+  while(ch == ' ' || ch == '\n' || ch == ';'){ch = fgetc(levl); } //printf("Looks like we've got some dead space, or a stray semicolon.\n");}
   if (ch == 's')
   {
-   printf("Let's add a static object.\n");
+   //printf("Let's add a static object.\n");
    statics[staticcount] = spoutStatic(levl, 4, TYPE_STATIC);
    staticcount++;
    ch = fgetc(levl);
   }
   if (ch == 'p')
   {
-   printf("Let's add a player.\n");
+   //printf("Let's add a player.\n");
    players[playerCount] = spoutStatic(levl, 4, TYPE_PLAYER);
    cameraFocusObject = &players[playerCount];
+   players[playerCount].ability = playerAbility;
    playerCount++;
    ch = fgetc(levl);
   }
   if (ch == 'c')
   {
-   printf("Let's add a checkpoint.\n");
+   //printf("Let's add a checkpoint.\n");
    statics[staticcount] = spoutStatic(levl, 2, TYPE_CHECKPOINT);
    staticcount++;
    ch = fgetc(levl);
   }
   if (ch == 'h')
   {
-   printf("Let's add a hurt trigger.\n");
+   //printf("Let's add a hurt trigger.\n");
    statics[staticcount] = spoutStatic(levl, 4, TYPE_HURT_VIS);
    staticcount++;
    ch = fgetc(levl);

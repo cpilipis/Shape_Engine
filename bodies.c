@@ -1,27 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "simplestuff.c" //Why is this in a separate file? It only defines ONE new function! One! And it's a function that C probably comes with in some math library anyways!
-
-typedef struct body
-{
- int type;
- int x;
- int y;
- int width;
- int height;
- int wide;
- int high; //high and wide are used for remembering how tall and wide something is supposed to be normally.
- int xvel;
- int yvel;
- int speed;
- int normSpeed; //used for remembering how fast something goes normally
- int direction;
- int jumppower;
- bool canJump;
- int ability;
- int spawnX;
- int spawnY;
-} body;
+#include "bodies.h"
 
 body *cameraFocusObject; //A pointer of the object the camera should follow
 //By making it a constant, we can make sure the function to follow the object with a camera does not alter it's x and y posiiton

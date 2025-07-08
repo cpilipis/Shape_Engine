@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "bodies.h"
-#include "input.h"
+#include "libbodies.h"
 
 const int GRAVITY = 1; //How much does gravity accelerate an object?
 const int GRAVTICK = 2; //How often does gravity accelerate an object?
@@ -12,7 +9,7 @@ const float FPS = 60; //The framerate is designed to never go above or below 60
 body collide(body a, body b)
 {
  //Let's take this one axis at a time . . .
-puts("Starting new Collidenew function!");
+//puts("Starting new Collidenew function!");
  bool xcoll = false;
  bool ycoll = false; //These mean the two objects are about to collide in some axis if we move them any further
  bool xocup = false;
@@ -43,29 +40,30 @@ puts("Starting new Collidenew function!");
  if(a.x + a.width < b.x - b.width || a.x - a.width > b.x + b.width)
  {
   xocup = false;
-  puts("Objects aren't in x axis");
- }else{xocup = true; puts ("Objects ARE in x axis");}
+  //puts("Objects aren't in x axis");
+ }else{xocup = true;} //puts ("Objects ARE in x axis");}
 
  if (a.x + a.width + signOf(a.xvel) < b.x - b.width || a.x - a.width + signOf(a.xvel) > b.x + b.width)
  {
   xcoll = false;
-  puts("Objects aren't about to collide");
- }else{xcoll = true; puts ("Objects will collide in x next frame");}
+  //puts("Objects aren't about to collide");
+ }else{xcoll = true; } //puts ("Objects will collide in x next frame");}
  //Now for Y
  if(a.y + a.height < b.y - b.height || a.y - a.height > b.y + b.height)
  {
   yocup = false;
-  puts ("Objects aren't in y axis");
- }else{yocup = true; puts ("Objects ARE in y axis");}
+  //puts ("Objects aren't in y axis");
+ }else{yocup = true;} //puts ("Objects ARE in y axis");}
 
  //Now to figure out if we even need to worry about the axises
- if(a.x + a.width + a.xvel < b.x - b.width || a.x - a.width + a.xvel > b.x + b.width){xmove = true; puts("No collide in X axis at all, skipping checks");}else{puts("Objects will collide in X"); xmove = false;}
- if(a.y + a.height + a.yvel < b.y - b.height || a.y - a.height + a.yvel > b.y + b.height){ymove = true; if(a.yvel != 0){a.canJump = false;} puts("No collide in y axis at all, skipping checks");}else{ymove = false; if(xocup && a.yvel >= 1){a.canJump = true;} puts("Player can jump, will collide in Y . . . ");}
+ if(a.x + a.width + a.xvel < b.x - b.width || a.x - a.width + a.xvel > b.x + b.width){xmove = true; /*puts("No collide in X axis at all, skipping checks");*/}else{xmove = false;}//puts("Objects will collide in X");}
+ if(a.y + a.height + a.yvel < b.y - b.height || a.y - a.height + a.yvel > b.y + b.height){ymove = true; if(a.yvel != 0){a.canJump = false;} /*puts("No collide in y axis at all, skipping checks");*/}else{ymove = false; if(xocup && a.yvel >= 1){a.canJump = true;} /*puts("Player can jump, will collide in Y . . . ");*/}
+//TODO: The above line is very, very, very awful and ugly, I hate it, gotta fix it if I ever touch this codebase again (I won't, it's garbage)
  if(a.y + a.height + signOf(a.yvel) < b.y - b.height || a.y - a.height + signOf(a.yvel) > b.y + b.height)
  {
   ycoll = false;
-  puts ("Objects aren't about to collide in y");
- }else{ycoll = true; puts ("Objects WILL collide in y next frame");}
+  //puts ("Objects aren't about to collide in y");
+ }else{ycoll = true;} //puts ("Objects WILL collide in y next frame");}
  while (!xcoll)
  {
   if(xmove || !yocup){break;}
@@ -73,8 +71,8 @@ puts("Starting new Collidenew function!");
   if (a.x + a.width + signOf(a.xvel) < b.x - b.width || a.x - a.width + signOf(a.xvel) > b.x + b.width)
   {
    xcoll = false;
-   puts("Objects aren't about to collide");
-  }else{xcoll = true; puts ("Objects will collide in x next frame");}
+   //puts("Objects aren't about to collide");
+  }else{xcoll = true;} //puts ("Objects will collide in x next frame");}
  }
  if(xcoll && yocup){a.xvel = 0;}
  while (!ycoll)
@@ -84,18 +82,18 @@ puts("Starting new Collidenew function!");
   if(a.y + a.height + signOf(a.yvel) < b.y - b.height || a.y - a.height + signOf(a.yvel) > b.y + b.height)
   {
    ycoll = false;
-   puts ("Objects aren't about to collide in y");
-  }else{ycoll = true; puts ("Objects WILL collide in y next frame");}
+   //puts ("Objects aren't about to collide in y");
+  }else{ycoll = true; }//puts ("Objects WILL collide in y next frame");}
 
  }
  if(ycoll && xocup){a.yvel = 0;}
- printf("Finishing collideNew function with an xvel of %d and a yvel of %d\n", a.xvel, a.yvel);
+ //printf("Finishing collideNew function with an xvel of %d and a yvel of %d\n", a.xvel, a.yvel);
  return a;
 }
 
 body updateBody(body b, body statics[], int staticcount, bool key[])
 {
- puts("Updating a body!");
+ //puts("Updating a body!");
  if (b.type == TYPE_STATIC || b.type == TYPE_CHECKPOINT || b.type == TYPE_PASSIVE){return b;}
  if (b.type == TYPE_CORPSE)
  {
@@ -117,7 +115,7 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
   {
    b.yvel = -b.jumppower;
    b.canJump = false;
-   puts ("Thing jumps!");
+   //puts ("Thing jumps!");
   }
   if(key[KEY_DOWN] && b.ability == ABIL_MORPH)
   {
@@ -132,7 +130,7 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
    if (b.width == b.wide && b.ability == ABIL_MORPH){b.x = b.x - b.wide/2;}
    if(b.ability == ABIL_MORPH){b.width = b.wide/2;}
    b.direction = DIR_LEFT;
-   puts ("Thing walks left!");
+   //puts ("Thing walks left!");
   }
   else if(key[KEY_RIGHT])
   {
@@ -141,7 +139,7 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
    if (b.width == b.wide && b.ability == ABIL_MORPH){b.x = b.x + b.wide/2;}
    if (b.ability == ABIL_MORPH){b.width = b.wide/2;}
    b.direction = DIR_RIGHT;
-   puts ("Thing walks right!");
+   //puts ("Thing walks right!");
   }else
   {
    b.xvel -= signOf(b.xvel);
@@ -162,11 +160,11 @@ body updateBody(body b, body statics[], int staticcount, bool key[])
  }
  if(gravdelay == GRAVTICK)
  {
-  puts ("Doing a gravity!");
+  //puts ("Doing a gravity!");
   gravdelay = 0;
   b.yvel = b.yvel + GRAVITY;
   if (b.type == TYPE_CORPSE && b.canJump){b.xvel = b.xvel - signOf(b.xvel);}
-  printf("%d\n", b.yvel);
+  //printf("%d\n", b.yvel);
  }else{gravdelay++;}
 
  for(int i = 0; i < staticcount; i++){body g = statics[i]; b = collide(b, g);}
